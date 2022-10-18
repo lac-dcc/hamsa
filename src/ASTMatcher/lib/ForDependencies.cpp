@@ -16,7 +16,15 @@ using namespace clang::tooling;
 
 static cl::OptionCategory MatcherCategory("matcher options");
 
-StatementMatcher forInit = forStmt(
+StatementMatcher forInitDecl = forStmt(
+                            hasLoopInit(
+                              declStmt(
+                                hasSingleDecl(
+                                  varDecl(
+                                    hasInitializer(
+                                      integerLiteral().bind("initVal"))).bind("initVar")))));
+
+StatementMatcher forInitAssign = forStmt(
                             hasLoopInit(
                               binaryOperator(
                                 isAssignmentOperator(),
@@ -60,6 +68,11 @@ public:
     	InitVar->dump();
     }
 
+    if (const clang::Decl *InitVar = Result.Nodes.getNodeAs<clang::Decl>("initVar")) {
+      outs() << "---Init var---\n";
+    	InitVar->dump();
+    }
+
     if (const clang::Expr *InitVal = Result.Nodes.getNodeAs<clang::Expr>("initVal")) {
       outs() << "---Init value---\n";
     	InitVal->dump();
@@ -79,7 +92,7 @@ public:
     	LoopInc->dump();
     }
     
-    if (const clang::Stmt *BodyInput = Result.Nodes.getNodeAs<clang::Stmt>("bodyInput")) {
+    if (const clang::DeclRefExpr *BodyInput = Result.Nodes.getNodeAs<clang::DeclRefExpr>("bodyInput")) {
       outs() << "---Body input---\n";
     	BodyInput->dump();
     }
@@ -103,7 +116,8 @@ int main(int argc, const char **argv) {
 
   LoopPrinter Printer;
 	MatchFinder Finder;
-	Finder.addMatcher(traverse(clang::TK_IgnoreUnlessSpelledInSource, forInit), &Printer);
+	Finder.addMatcher(traverse(clang::TK_IgnoreUnlessSpelledInSource, forInitDecl), &Printer);
+	Finder.addMatcher(traverse(clang::TK_IgnoreUnlessSpelledInSource, forInitAssign), &Printer);
 	Finder.addMatcher(traverse(clang::TK_IgnoreUnlessSpelledInSource, forCond), &Printer);
 	Finder.addMatcher(traverse(clang::TK_IgnoreUnlessSpelledInSource, forInc), &Printer);
 	Finder.addMatcher(traverse(clang::TK_IgnoreUnlessSpelledInSource, forBodyInput), &Printer);
