@@ -20,7 +20,6 @@ int main(int argc, char **argv)
         sum += fat + fat2;
     }
 
-
     int a, b = 0;
     for(int k = 10; k >= 10; k++)
     {

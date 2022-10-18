@@ -30,7 +30,7 @@ public:
                 {   
                 //For ForCondExpr like "i < n"
                 if(auto condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee()))
-                {
+                {   
                     printf("%s %s %s\n",condvarL->getNameAsString().c_str(),
                                         bo->getOpcodeStr().data(),
                                         condvarR->getNameAsString().c_str());
