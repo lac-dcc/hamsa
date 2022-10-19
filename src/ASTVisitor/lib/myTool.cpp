@@ -17,7 +17,28 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
         : Context(Context) {}
 
     bool VisitForStmt(ForStmt *fstmt) {
+        auto init = fstmt->getInit();
         auto cond = fstmt->getCond();
+
+        if (init) {
+            // Initialization as assignment expression
+            if (auto assign = dyn_cast<BinaryOperator>(init)) {
+                if (assign->isAssignmentOp()) {
+                    if (auto initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
+                        outs() << initVar->getType().getAsString() << " " << initVar->getNameAsString() << " = ";
+                    
+                    // Initialization with RHS as another variable
+                    if (auto initValDecl = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+                        outs() << initValDecl->getNameAsString() << '\n';
+                    }
+                    // Initialization with RHS as an integer
+                    else if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
+                        outs() << (int)initValInt->getValue().roundToDouble() << '\n';
+                    }
+                }
+            }
+        }
+
         if (cond) {
             if (auto bo = dyn_cast<BinaryOperator>(cond)) {
                 auto boolRHS = bo->getRHS();
