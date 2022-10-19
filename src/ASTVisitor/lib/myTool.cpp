@@ -19,7 +19,7 @@ public:
 
     bool VisitForStmt(ForStmt *fstmt)
     {      
-        fstmt->dumpColor();
+        
         auto cond = fstmt->getCond();
         if(cond)
         {   
