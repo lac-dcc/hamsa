@@ -25,24 +25,29 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
             if (auto assign = dyn_cast<BinaryOperator>(init)) {
                 if (assign->isAssignmentOp()) {
                     if (auto initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
-                        outs() << initVar->getType().getAsString() << " " << initVar->getNameAsString() << " = ";
+                        outs() << initVar->getNameAsString() << " = ";
 
-                    // Initialization with RHS as another variable
-                    if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
-                        outs() << initDeclRef->getNameAsString() << '\n';
-                    }
                     // Initialization with RHS as an integer
-                    else if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
+                    if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
                         outs() << (int)initValInt->getValue().roundToDouble() << '\n';
+                    }
+                    // Initialization with RHS as another variable
+                    else if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+                        outs() << initDeclRef->getNameAsString() << '\n';
                     }
                 }
             }
             // Initialzation with a var declaration
             else if (auto varDeclStmt = dyn_cast<DeclStmt>(init)) {
                 if (auto valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
-                    outs() << valDecl->getType().getAsString() << " " << valDecl->getNameAsString();
-                    if (auto varDeclInitVal = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
-                        outs() << " = " << varDeclInitVal->getValue() << '\n';
+                    outs() << valDecl->getType().getAsString() << " " << valDecl->getNameAsString() << " = ";
+                    // Initialization with an integer
+                    if (auto varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
+                        outs() << varDeclInt->getValue() << '\n';
+                    }
+                    // Initialization with another variable
+                    else if (auto varDeclRef = dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
+                        outs() << varDeclRef->getNameAsString() << '\n';
                     }
                 }
             }
