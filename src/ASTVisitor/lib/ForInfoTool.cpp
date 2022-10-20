@@ -60,15 +60,13 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                 if (auto condvarL = dyn_cast<VarDecl>(boolLHS->getReferencedDeclOfCallee())) {
                     // For ForCondExpr like "i < n"
                     if (auto condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
-                        printf("%s %s %s\n", condvarL->getNameAsString().c_str(),
-                               bo->getOpcodeStr().data(),
-                               condvarR->getNameAsString().c_str());
+                        outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
+                        << " " << condvarR->getNameAsString() << '\n';
                     }
                     // For ForCondExpr like "i > 10"
                     else if (auto condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
-                        printf("%s %s %0.0lf\n", condvarL->getNameAsString().c_str(),
-                               bo->getOpcodeStr().data(),
-                               condvalR->getValue().roundToDouble());
+                        outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
+                        << " " << (int) condvalR->getValue().roundToDouble() << '\n';
                     }
                 }
             }
