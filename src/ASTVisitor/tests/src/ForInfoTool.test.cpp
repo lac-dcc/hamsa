@@ -5,7 +5,7 @@
 #include <iostream>
 #define LOG "log.txt"
 
-TEST_CASE("Testing sample1") {
+TEST_CASE("Sample: 1") {
     std::system("../build/bin/ForInfoTool samples/sample1.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
