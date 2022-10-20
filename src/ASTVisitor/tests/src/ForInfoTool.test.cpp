@@ -154,8 +154,8 @@ TEST_CASE("Sample: 8") {
     int valInit_1, valCond_1;
     int valInit_2, valCond_2;
 
-    log >> type_1 >> name_1 >> atrb_1 >> valInit_1 >> type_2 >> name_2 >> atrb_2 >> valInit_2;
-    log >> name2_1 >> comp_1 >> valCond_1 >> name2_2 >> comp_2 >> valCond_2;
+    log >> type_1 >> name_1 >> atrb_1 >> valInit_1 >> name2_1 >> comp_1 >> valCond_1;
+    log >> type_2 >> name_2 >> atrb_2 >> valInit_2 >> name2_2 >> comp_2 >> valCond_2;
 
     CHECK(!type_1.compare("int"));
     CHECK(!name_1.compare("i"));
@@ -186,8 +186,8 @@ TEST_CASE("Sample: 9") {
     int valInit_1;
     int valCond_2;
 
-    log >> type_1 >> name_1 >> atrb_1 >> valInit_1 >> type_2 >> name_2 >> atrb_2 >> valInit_2;
-    log >> name2_1 >> comp_1 >> valCond_1 >> name2_2 >> comp_2 >> valCond_2;
+    log >> type_1 >> name_1 >> atrb_1 >> valInit_1 >> name2_1 >> comp_1 >> valCond_1;
+    log >> type_2 >> name_2 >> atrb_2 >> valInit_2 >> name2_2 >> comp_2 >> valCond_2;
 
     CHECK(!type_1.compare("int"));
     CHECK(!name_1.compare("i"));
@@ -219,8 +219,9 @@ TEST_CASE("Sample: 10") {
     int valInit_1;
     int valInit_3;
 
-    log >> name_1 >> atrb_1 >> valInit_1 >> name_2 >> atrb_2 >> valInit_2 >> name_3 >> atrb_3 >> valInit_3;
-    log >> name2_1 >> comp_1 >> valCond_1 >> name2_2 >> comp_2 >> valCond_2 >> name2_3 >> comp_3 >> valCond_3;
+    log >> name_1 >> atrb_1 >> valInit_1 >> name2_1 >> comp_1 >> valCond_1;
+    log >> name_2 >> atrb_2 >> valInit_2 >> name2_2 >> comp_2 >> valCond_2;
+    log >> name_3 >> atrb_3 >> valInit_3 >> name2_3 >> comp_3 >> valCond_3;
 
     CHECK(!name_1.compare("j"));
     CHECK(!atrb_1.compare("="));
