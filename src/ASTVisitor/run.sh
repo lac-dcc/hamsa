@@ -2,6 +2,6 @@
 
 mkdir -p results
 
-PROGRAM="sample/sample1.cpp"
+PROGRAM="tests/samples/sample1.cpp"
 
-./build/bin/myTool $PROGRAM
+./build/bin/ForInfoTool $PROGRAM
