@@ -1,15 +1,16 @@
 
 int main(int argc, char **argv) 
 {
-    int fat, fat2, m, n, i, j;
+    int fat, fat2, m, n, i, j, l;
     int sum = 0;
+    l = 2;
     m = 10;
     n = 15;
 
-    fat = 1; fat2 =1;
+    fat = 1; fat2 = 1;
     for(j = 1; j <= n; j++)
     {
-        for(i = 1; i <= j; i++)
+        for(i = l; i <= j; i++)
         {
             fat *= i;
         }
@@ -26,7 +27,7 @@ int main(int argc, char **argv)
         a+=i;
     }
 
-    for(int k = 0; k < a; k++)
+    for(int k = l; k < a; k++)
     {
         for (i = 20; i > 0; i--)
         {
