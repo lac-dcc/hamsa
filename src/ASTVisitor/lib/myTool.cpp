@@ -30,8 +30,8 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                         outs() << initVar->getType().getAsString() << " " << initVar->getNameAsString() << " = ";
                     
                     // Initialization with RHS as another variable
-                    if (auto initValDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
-                        outs() << initValDeclRef->getNameAsString() << '\n';
+                    if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+                        outs() << initDeclRef->getNameAsString() << '\n';
                     }
                     // Initialization with RHS as an integer
                     else if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
@@ -40,7 +40,7 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                 }
             }
             // Initialzation with a var declaration
-            
+            else if(auto varDecl)
 
         }
 
