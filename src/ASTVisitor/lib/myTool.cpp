@@ -1,5 +1,5 @@
-#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/CommonOptionsParser.h"
@@ -21,14 +21,12 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
         auto cond = fstmt->getCond();
 
         if (init) {
-            init->dumpColor();
             // Initialization as assignment expression
             if (auto assign = dyn_cast<BinaryOperator>(init)) {
-                
                 if (assign->isAssignmentOp()) {
                     if (auto initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
                         outs() << initVar->getType().getAsString() << " " << initVar->getNameAsString() << " = ";
-                    
+
                     // Initialization with RHS as another variable
                     if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
                         outs() << initDeclRef->getNameAsString() << '\n';
@@ -40,8 +38,14 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                 }
             }
             // Initialzation with a var declaration
-            else if(auto varDecl)
-
+            else if (auto varDeclStmt = dyn_cast<DeclStmt>(init)) {
+                if (auto valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
+                    outs() << valDecl->getType().getAsString() << " " << valDecl->getNameAsString();
+                    if (auto varDeclInitVal = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
+                        outs() << " = " << varDeclInitVal->getValue() << '\n';
+                    }
+                }
+            }
         }
 
         if (cond) {
@@ -66,6 +70,7 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
         }
         return true;
     }
+
    private:
     ASTContext *Context;
 };
