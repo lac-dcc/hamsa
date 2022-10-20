@@ -1,5 +1,5 @@
-#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/CommonOptionsParser.h"
@@ -21,15 +21,17 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
         auto cond = fstmt->getCond();
 
         if (init) {
+            init->dumpColor();
             // Initialization as assignment expression
             if (auto assign = dyn_cast<BinaryOperator>(init)) {
+                
                 if (assign->isAssignmentOp()) {
                     if (auto initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
                         outs() << initVar->getType().getAsString() << " " << initVar->getNameAsString() << " = ";
                     
                     // Initialization with RHS as another variable
-                    if (auto initValDecl = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
-                        outs() << initValDecl->getNameAsString() << '\n';
+                    if (auto initValDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+                        outs() << initValDeclRef->getNameAsString() << '\n';
                     }
                     // Initialization with RHS as an integer
                     else if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
@@ -37,6 +39,9 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                     }
                 }
             }
+            // Initialzation with a var declaration
+            
+
         }
 
         if (cond) {
