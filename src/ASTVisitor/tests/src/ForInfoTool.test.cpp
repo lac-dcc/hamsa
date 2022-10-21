@@ -1,5 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "../doctest/doctest/doctest.h"
+#include "doctest.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -15,12 +15,12 @@ TEST_CASE("Sample: 1") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
     CHECK(valInit == 0);
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare("<"));
+    CHECK(name2 == "i");
+    CHECK(comp == "<");
     CHECK(valCond == 10);
     log.close();
 }
@@ -35,12 +35,12 @@ TEST_CASE("Sample: 2") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
     CHECK(valInit == 10);
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare(">"));
+    CHECK(name2 == "i");
+    CHECK(comp == ">");
     CHECK(valCond == 0);
     log.close();
 }
@@ -55,12 +55,12 @@ TEST_CASE("Sample: 3") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
     CHECK(valInit == 0);
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare("<="));
+    CHECK(name2 == "i");
+    CHECK(comp == "<=");
     CHECK(valCond == 10);
     log.close();
 }
@@ -75,12 +75,12 @@ TEST_CASE("Sample: 4") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
     CHECK(valInit == 10);
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare(">="));
+    CHECK(name2 == "i");
+    CHECK(comp == ">=");
     CHECK(valCond == 0);
     log.close();
 }
@@ -95,12 +95,12 @@ TEST_CASE("Sample: 5") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
-    CHECK(!valInit.compare("n"));
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare("<"));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
+    CHECK(valInit == "n");
+    CHECK(name2 == "i");
+    CHECK(comp == "<");
     CHECK(valCond == 10);
     log.close();
 }
@@ -115,13 +115,13 @@ TEST_CASE("Sample: 6") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
     CHECK(valInit == 0);
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare("<"));
-    CHECK(!valCond.compare("n"));
+    CHECK(name2 == "i");
+    CHECK(comp == "<");
+    CHECK(valCond == "n");
     log.close();
 }
 
@@ -134,13 +134,13 @@ TEST_CASE("Sample: 7") {
 
     log >> type >> name >> atrb >> valInit >> name2 >> comp >> valCond;
 
-    CHECK(!type.compare("int"));
-    CHECK(!name.compare("i"));
-    CHECK(!atrb.compare("="));
-    CHECK(!valInit.compare("n"));
-    CHECK(!name2.compare("i"));
-    CHECK(!comp.compare("<"));
-    CHECK(!valCond.compare("m"));
+    CHECK(type == "int");
+    CHECK(name == "i");
+    CHECK(atrb == "=");
+    CHECK(valInit == "n");
+    CHECK(name2 == "i");
+    CHECK(comp == "<");
+    CHECK(valCond == "m");
     log.close();
 }
 
@@ -157,20 +157,20 @@ TEST_CASE("Sample: 8") {
     log >> type_1 >> name_1 >> atrb_1 >> valInit_1 >> name2_1 >> comp_1 >> valCond_1;
     log >> type_2 >> name_2 >> atrb_2 >> valInit_2 >> name2_2 >> comp_2 >> valCond_2;
 
-    CHECK(!type_1.compare("int"));
-    CHECK(!name_1.compare("i"));
-    CHECK(!atrb_1.compare("="));
+    CHECK(type_1 == "int");
+    CHECK(name_1 == "i");
+    CHECK(atrb_1 == "=");
     CHECK(valInit_1 == 0);
-    CHECK(!name2_1.compare("i"));
-    CHECK(!comp_1.compare("<"));
+    CHECK(name2_1 == "i");
+    CHECK(comp_1 == "<");
     CHECK(valCond_1 == 10);
 
-    CHECK(!type_2.compare("int"));
-    CHECK(!name_2.compare("j"));
-    CHECK(!atrb_2.compare("="));
+    CHECK(type_2 == "int");
+    CHECK(name_2 == "j");
+    CHECK(atrb_2 == "=");
     CHECK(valInit_2 == 10);
-    CHECK(!name2_2.compare("j"));
-    CHECK(!comp_2.compare("<="));
+    CHECK(name2_2 == "j");
+    CHECK(comp_2 == "<=");
     CHECK(valCond_2 == 0);
     
     log.close();
@@ -189,20 +189,20 @@ TEST_CASE("Sample: 9") {
     log >> type_1 >> name_1 >> atrb_1 >> valInit_1 >> name2_1 >> comp_1 >> valCond_1;
     log >> type_2 >> name_2 >> atrb_2 >> valInit_2 >> name2_2 >> comp_2 >> valCond_2;
 
-    CHECK(!type_1.compare("int"));
-    CHECK(!name_1.compare("i"));
-    CHECK(!atrb_1.compare("="));
+    CHECK(type_1 == "int");
+    CHECK(name_1 == "i");
+    CHECK(atrb_1 == "=");
     CHECK(valInit_1 == 0);
-    CHECK(!name2_1.compare("i"));
-    CHECK(!comp_1.compare("<"));
-    CHECK(!valCond_1.compare("m"));
+    CHECK(name2_1 == "i");
+    CHECK(comp_1 == "<");
+    CHECK(valCond_1 == "m");
 
-    CHECK(!type_2.compare("int"));
-    CHECK(!name_2.compare("j"));
-    CHECK(!atrb_2.compare("="));
-    CHECK(!valInit_2.compare("n"));
-    CHECK(!name2_2.compare("j"));
-    CHECK(!comp_2.compare(">="));
+    CHECK(type_2 == "int");
+    CHECK(name_2 == "j");
+    CHECK(atrb_2 == "=");
+    CHECK(valInit_2 == "n");
+    CHECK(name2_2 == "j");
+    CHECK(comp_2 == ">=");
     CHECK(valCond_2 == 0);
     
     log.close();
@@ -223,26 +223,26 @@ TEST_CASE("Sample: 10") {
     log >> name_2 >> atrb_2 >> valInit_2 >> name2_2 >> comp_2 >> valCond_2;
     log >> name_3 >> atrb_3 >> valInit_3 >> name2_3 >> comp_3 >> valCond_3;
 
-    CHECK(!name_1.compare("j"));
-    CHECK(!atrb_1.compare("="));
+    CHECK(name_1 == "j");
+    CHECK(atrb_1 == "=");
     CHECK(valInit_1 == 1);
-    CHECK(!name2_1.compare("j"));
-    CHECK(!comp_1.compare("<="));
-    CHECK(!valCond_1.compare("n"));
+    CHECK(name2_1 == "j");
+    CHECK(comp_1 == "<=");
+    CHECK(valCond_1 == "n");
 
-    CHECK(!name_2.compare("i"));
-    CHECK(!atrb_2.compare("="));
-    CHECK(!valInit_2.compare("l"));
-    CHECK(!name2_2.compare("i"));
-    CHECK(!comp_2.compare("<="));
-    CHECK(!valCond_2.compare("j"));
+    CHECK(name_2 == "i");
+    CHECK(atrb_2 == "=");
+    CHECK(valInit_2 == "l");
+    CHECK(name2_2 == "i");
+    CHECK(comp_2 == "<=");
+    CHECK(valCond_2 == "j");
 
-    CHECK(!name_3.compare("i"));
-    CHECK(!atrb_3.compare("="));
+    CHECK(name_3 == "i");
+    CHECK(atrb_3 == "=");
     CHECK(valInit_3 == 1);
-    CHECK(!name2_3.compare("i"));
-    CHECK(!comp_3.compare("<="));
-    CHECK(!valCond_3.compare("m"));
+    CHECK(name2_3 == "i");
+    CHECK(comp_3 == "<=");
+    CHECK(valCond_3 == "m");
     
     log.close();
 }
