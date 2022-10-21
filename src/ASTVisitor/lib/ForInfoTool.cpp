@@ -19,6 +19,7 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
     bool VisitForStmt(ForStmt *fstmt) {
         auto init = fstmt->getInit();
         auto cond = fstmt->getCond();
+        auto inc = fstmt->getInc();
 
         if (init) {
             // Initialization as assignment expression
@@ -67,6 +68,19 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                     else if (auto condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
                         outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
                         << " " << (int) condvalR->getValue().roundToDouble() << '\n';
+                    }
+                }
+            }
+        }
+
+        if (inc) {
+            if (auto unaryOp = dyn_cast<UnaryOperator>(inc)) {
+                if (unaryOp->isIncrementDecrementOp()) {
+                    if (auto varRef = dyn_cast<VarDecl>(unaryOp->getSubExpr()->getReferencedDeclOfCallee())) {
+                        if (unaryOp->isPrefix()) outs() << unaryOp->getOpcodeStr(unaryOp->getOpcode());
+                        outs() << varRef->getNameAsString();
+                        if (unaryOp->isPostfix()) outs() << unaryOp->getOpcodeStr(unaryOp->getOpcode());
+                        outs() << '\n';
                     }
                 }
             }
