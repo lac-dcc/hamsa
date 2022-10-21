@@ -2,6 +2,6 @@
 
 mkdir -p results
 
-PROGRAM="tests/samples/sample1.cpp"
+PROGRAM=$1
 
 ./build/bin/ForInfoTool $PROGRAM
