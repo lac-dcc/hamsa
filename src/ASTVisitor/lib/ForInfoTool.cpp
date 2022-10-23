@@ -20,6 +20,7 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
         auto init = fstmt->getInit();
         auto cond = fstmt->getCond();
         auto inc = fstmt->getInc();
+        auto body = fstmt->getBody();
 
         if (init) {
             // Initialization as assignment expression
@@ -85,6 +86,20 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                 }
             }
         }
+
+        if (body) {
+            if (auto bodyStmt = dyn_cast<CompoundStmt>(body)) {
+                auto it = bodyStmt->children().begin();
+                while (it != bodyStmt->children().end()) {
+                    if (auto nestedFor = dyn_cast<ForStmt>(*it)) {
+                        outs() << "Nested for!\n";
+                        nestedFor->dump();
+                    }
+                    it++;
+                }
+            }
+        }
+
         return true;
     }
 
