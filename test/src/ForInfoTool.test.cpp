@@ -6,7 +6,7 @@
 #define LOG "log.txt"
 
 TEST_CASE("Sample: 1") {
-    std::system("../build/bin/ForInfoTool samples/sample1.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample1.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -27,7 +27,7 @@ TEST_CASE("Sample: 1") {
 }
 
 TEST_CASE("Sample: 2") {
-    std::system("../build/bin/ForInfoTool samples/sample2.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample2.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -48,7 +48,7 @@ TEST_CASE("Sample: 2") {
 }
 
 TEST_CASE("Sample: 3") {
-    std::system("../build/bin/ForInfoTool samples/sample3.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample3.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -69,7 +69,7 @@ TEST_CASE("Sample: 3") {
 }
 
 TEST_CASE("Sample: 4") {
-    std::system("../build/bin/ForInfoTool samples/sample4.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample4.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -90,7 +90,7 @@ TEST_CASE("Sample: 4") {
 }
 
 TEST_CASE("Sample: 5") {
-    std::system("../build/bin/ForInfoTool samples/sample5.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample5.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -111,7 +111,7 @@ TEST_CASE("Sample: 5") {
 }
 
 TEST_CASE("Sample: 6") {
-    std::system("../build/bin/ForInfoTool samples/sample6.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample6.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -132,7 +132,7 @@ TEST_CASE("Sample: 6") {
 }
 
 TEST_CASE("Sample: 7") {
-    std::system("../build/bin/ForInfoTool samples/sample7.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample7.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -152,7 +152,7 @@ TEST_CASE("Sample: 7") {
 }
 
 TEST_CASE("Sample: 8") {
-    std::system("../build/bin/ForInfoTool samples/sample8.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample8.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -186,7 +186,7 @@ TEST_CASE("Sample: 8") {
 }
 
 TEST_CASE("Sample: 9") {
-    std::system("../build/bin/ForInfoTool samples/sample9.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample9.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
@@ -220,7 +220,7 @@ TEST_CASE("Sample: 9") {
 }
 
 TEST_CASE("Sample: 10") {
-    std::system("../build/bin/ForInfoTool samples/sample10.cpp > log.txt");
+    std::system("../src/build/bin/ForInfoTool samples/sample10.cpp > log.txt");
     std::fstream log;
     log.open(LOG, std::fstream::in);
     
