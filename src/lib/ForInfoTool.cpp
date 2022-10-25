@@ -31,11 +31,11 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
 
                     // Initialization with RHS as an integer
                     if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
-                        outs() << (int)initValInt->getValue().roundToDouble() << '\n';
+                        outs() << (int)initValInt->getValue().roundToDouble() << "; ";
                     }
                     // Initialization with RHS as another variable
                     else if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
-                        outs() << initDeclRef->getNameAsString() << '\n';
+                        outs() << initDeclRef->getNameAsString() << "; ";
                     }
                 }
             }
@@ -45,11 +45,11 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                     outs() << valDecl->getType().getAsString() << " " << valDecl->getNameAsString() << " = ";
                     // Initialization with an integer
                     if (auto varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
-                        outs() << varDeclInt->getValue() << '\n';
+                        outs() << varDeclInt->getValue() << "; ";
                     }
                     // Initialization with another variable
                     else if (auto varDeclRef = dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
-                        outs() << varDeclRef->getNameAsString() << '\n';
+                        outs() << varDeclRef->getNameAsString() << "; ";
                     }
                 }
             }
@@ -63,12 +63,12 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                     // For ForCondExpr like "i < n"
                     if (auto condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
                         outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
-                        << " " << condvarR->getNameAsString() << '\n';
+                        << " " << condvarR->getNameAsString() << "; ";
                     }
                     // For ForCondExpr like "i > 10"
                     else if (auto condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
                         outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
-                        << " " << (int) condvalR->getValue().roundToDouble() << '\n';
+                        << " " << (int) condvalR->getValue().roundToDouble() << "; ";
                     }
                 }
             }
@@ -90,16 +90,16 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
         if (body) {
             if (auto bodyStmt = dyn_cast<CompoundStmt>(body)) {
                 auto it = bodyStmt->children().begin();
+                outs() << "{\n";
                 while (it != bodyStmt->children().end()) {
                     if (auto nestedFor = dyn_cast<ForStmt>(*it)) {
-                        outs() << "Nested for!\n";
-                        nestedFor->dump();
+                        VisitForStmt(nestedFor);
                     }
                     it++;
                 }
+                outs() << "}\n";
             }
         }
-
         return true;
     }
 
