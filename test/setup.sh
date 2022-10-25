@@ -1,0 +1,1 @@
+c++ src/ForInfoTool.test.cpp -o bin/runTests
