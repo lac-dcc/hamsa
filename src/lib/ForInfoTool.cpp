@@ -12,16 +12,24 @@ using namespace llvm;
 static llvm::cl::OptionCategory MatcherCategory("matcher options");
 
 class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
-   public:
+  public:
     explicit FindForCondVisitor(ASTContext *Context)
         : Context(Context) {}
 
     bool VisitForStmt(ForStmt *fstmt) {
-        auto init = fstmt->getInit();
-        auto cond = fstmt->getCond();
-        auto inc = fstmt->getInc();
-        auto body = fstmt->getBody();
+        handleForInit(fstmt->getInit());
+        handleForCond(fstmt->getCond());
+        handleForInc(fstmt->getInc());
+        handleForBody(fstmt->getBody());
 
+        return true;
+    }
+
+  private:
+    ASTContext *Context;
+
+    // Handling the initialization statement
+    void handleForInit(Stmt *init) {
         if (init) {
             // Initialization as assignment expression
             if (auto assign = dyn_cast<BinaryOperator>(init)) {
@@ -54,7 +62,10 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                 }
             }
         }
+    }
 
+    // Handling the condition expression
+    void handleForCond(Expr *cond) {
         if (cond) {
             if (auto bo = dyn_cast<BinaryOperator>(cond)) {
                 auto boolRHS = bo->getRHS();
@@ -63,52 +74,56 @@ class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
                     // For ForCondExpr like "i < n"
                     if (auto condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
                         outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
-                        << " " << condvarR->getNameAsString() << " ; ";
+                               << " " << condvarR->getNameAsString() << " ; ";
                     }
                     // For ForCondExpr like "i > 10"
                     else if (auto condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
                         outs() << condvarL->getNameAsString() << " " << bo->getOpcodeStr().data()
-                        << " " << (int) condvalR->getValue().roundToDouble() << " ; ";
+                               << " " << (int)condvalR->getValue().roundToDouble() << " ; ";
                     }
                 }
             }
         }
+    }
 
+    // Handling the increment expression
+    void handleForInc(Expr *inc) {
         if (inc) {
             if (auto unaryOp = dyn_cast<UnaryOperator>(inc)) {
                 if (unaryOp->isIncrementDecrementOp()) {
                     if (auto varRef = dyn_cast<VarDecl>(unaryOp->getSubExpr()->getReferencedDeclOfCallee())) {
-                        if (unaryOp->isPrefix()) outs() << unaryOp->getOpcodeStr(unaryOp->getOpcode());
+                        if (unaryOp->isPrefix())
+                            outs() << unaryOp->getOpcodeStr(unaryOp->getOpcode());
                         outs() << varRef->getNameAsString();
-                        if (unaryOp->isPostfix()) outs() << unaryOp->getOpcodeStr(unaryOp->getOpcode());
+                        if (unaryOp->isPostfix())
+                            outs() << unaryOp->getOpcodeStr(unaryOp->getOpcode());
                         outs() << '\n';
                     }
                 }
             }
         }
+    }
 
+    // Handling the body of the for loop
+    void handleForBody(Stmt *body) {
         if (body) {
             if (auto bodyStmt = dyn_cast<CompoundStmt>(body)) {
                 auto it = bodyStmt->children().begin();
                 outs() << "{\n";
                 while (it != bodyStmt->children().end()) {
-                    if (auto nestedFor = dyn_cast<ForStmt>(*it)) {
+                    // Checking for nested loops
+                    if (auto nestedFor = dyn_cast<ForStmt>(*it))
                         VisitForStmt(nestedFor);
-                    }
                     it++;
                 }
                 outs() << "}\n";
             }
         }
-        return true;
     }
-
-   private:
-    ASTContext *Context;
 };
 
 class FindForCondConsumer : public clang::ASTConsumer {
-   public:
+  public:
     explicit FindForCondConsumer(ASTContext *Context)
         : Visitor(Context) {}
 
@@ -116,12 +131,12 @@ class FindForCondConsumer : public clang::ASTConsumer {
         Visitor.TraverseDecl(Context.getTranslationUnitDecl());
     }
 
-   private:
+  private:
     FindForCondVisitor Visitor;
 };
 
 class FindForCondAction : public clang::ASTFrontendAction {
-   public:
+  public:
     virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
         clang::CompilerInstance &Compiler, llvm::StringRef InFile) {
         return std::make_unique<FindForCondConsumer>(&Compiler.getASTContext());
