@@ -16,10 +16,23 @@ public:
   explicit FindForCondVisitor(ASTContext *Context) : Context(Context) {}
 
   bool VisitForStmt(ForStmt *fstmt) {
-    handleForInit(fstmt->getInit());
-    handleForCond(fstmt->getCond());
+    SmallVector<VarDecl *> inputs;
+
+    handleForInit(fstmt->getInit(), inputs);
+    handleForCond(fstmt->getCond(), inputs);
     handleForInc(fstmt->getInc());
     handleForBody(fstmt->getBody());
+
+    if (inputs.size() != 0) {
+      bool isFirst = true;
+      outs() << "[";
+      for (auto input : inputs) {
+        outs() << (isFirst ? isFirst = false, "" : ", ")
+               << input->getNameAsString();
+      }
+      outs() << "]\n";
+    }
+
     return true;
   }
 
@@ -27,7 +40,7 @@ private:
   ASTContext *Context;
 
   // Handling the initialization statement
-  void handleForInit(Stmt *init) {
+  void handleForInit(Stmt *init, SmallVector<VarDecl *> &inputs) {
     if (init) {
       // Initialization as assignment expression
       if (auto assign = dyn_cast<BinaryOperator>(init)) {
@@ -43,6 +56,7 @@ private:
           // Initialization with RHS as another variable
           else if (auto initDeclRef = dyn_cast<VarDecl>(
                        assign->getRHS()->getReferencedDeclOfCallee())) {
+            inputs.push_back(initDeclRef);
             outs() << initDeclRef->getNameAsString() << ", ";
           }
         }
@@ -60,6 +74,7 @@ private:
                        dyn_cast<VarDecl>(valDecl->getInit()
                                              ->IgnoreImpCasts()
                                              ->getReferencedDeclOfCallee())) {
+            inputs.push_back(varDeclRef);
             outs() << varDeclRef->getNameAsString() << ", ";
           }
         }
@@ -68,7 +83,7 @@ private:
   }
 
   // Handling the condition expression
-  void handleForCond(Expr *cond) {
+  void handleForCond(Expr *cond, SmallVector<VarDecl *> &inputs) {
     if (cond) {
       if (auto bo = dyn_cast<BinaryOperator>(cond)) {
         auto boolRHS = bo->getRHS();
@@ -78,6 +93,7 @@ private:
           // For ForCondExpr like "i < n"
           if (auto condvarR =
                   dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
+            inputs.push_back(condvarR);
             outs() << condvarR->getNameAsString() << ", ";
           }
           // For ForCondExpr like "i > 10"
