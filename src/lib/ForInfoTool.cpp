@@ -4,6 +4,7 @@
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/SmallSet.h"
 
 using namespace clang;
 using namespace clang::tooling;
@@ -13,40 +14,42 @@ static llvm::cl::OptionCategory MatcherCategory("matcher options");
 
 class FindForCondVisitor : public RecursiveASTVisitor<FindForCondVisitor> {
 public:
-  explicit FindForCondVisitor(ASTContext *Context) : Context(Context) {}
+  explicit FindForCondVisitor(ASTContext* Context) : Context(Context) {}
 
-  bool VisitForStmt(ForStmt *fstmt) {
-    SmallVector<VarDecl *> inputs;
+  bool VisitForStmt(ForStmt* fstmt, bool nested = false) {
 
-    handleForInit(fstmt->getInit(), inputs);
-    handleForCond(fstmt->getCond(), inputs);
+    handleForInit(fstmt->getInit());
+    handleForCond(fstmt->getCond());
     handleForInc(fstmt->getInc());
     handleForBody(fstmt->getBody());
 
-    if (inputs.size() != 0) {
+    if (inputsBuffer.size() != 0 && nested == false) {
       bool isFirst = true;
       outs() << "[";
-      for (auto input : inputs) {
-        outs() << (isFirst ? isFirst = false, "" : ", ")
-               << input->getNameAsString();
+      for (auto input : inputsBuffer) {
+        outs() << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
       }
       outs() << "]\n";
     }
 
+    if (nested == false && inputsBuffer.size())
+      inputsBuffer.clear();
     return true;
   }
 
 private:
-  ASTContext *Context;
+  ASTContext* Context;
+
+  // This container is used to store the for's inputs
+  SmallSet<VarDecl*, 6> inputsBuffer;
 
   // Handling the initialization statement
-  void handleForInit(Stmt *init, SmallVector<VarDecl *> &inputs) {
+  void handleForInit(Stmt* init) {
     if (init) {
       // Initialization as assignment expression
       if (auto assign = dyn_cast<BinaryOperator>(init)) {
         if (assign->isAssignmentOp()) {
-          if (auto initVar = dyn_cast<VarDecl>(
-                  assign->getLHS()->getReferencedDeclOfCallee()))
+          if (auto initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
             outs() << initVar->getNameAsString() << ", <";
 
           // Initialization with RHS as an integer
@@ -54,9 +57,8 @@ private:
             outs() << (int)initValInt->getValue().roundToDouble() << ", ";
           }
           // Initialization with RHS as another variable
-          else if (auto initDeclRef = dyn_cast<VarDecl>(
-                       assign->getRHS()->getReferencedDeclOfCallee())) {
-            inputs.push_back(initDeclRef);
+          else if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+            inputsBuffer.insert(initDeclRef);
             outs() << initDeclRef->getNameAsString() << ", ";
           }
         }
@@ -71,10 +73,8 @@ private:
           }
           // Initialization with another variable
           else if (auto varDeclRef =
-                       dyn_cast<VarDecl>(valDecl->getInit()
-                                             ->IgnoreImpCasts()
-                                             ->getReferencedDeclOfCallee())) {
-            inputs.push_back(varDeclRef);
+                       dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
+            inputsBuffer.insert(varDeclRef);
             outs() << varDeclRef->getNameAsString() << ", ";
           }
         }
@@ -83,17 +83,15 @@ private:
   }
 
   // Handling the condition expression
-  void handleForCond(Expr *cond, SmallVector<VarDecl *> &inputs) {
+  void handleForCond(Expr* cond) {
     if (cond) {
       if (auto bo = dyn_cast<BinaryOperator>(cond)) {
         auto boolRHS = bo->getRHS();
         auto boolLHS = bo->getLHS();
-        if (auto condvarL =
-                dyn_cast<VarDecl>(boolLHS->getReferencedDeclOfCallee())) {
+        if (auto condvarL = dyn_cast<VarDecl>(boolLHS->getReferencedDeclOfCallee())) {
           // For ForCondExpr like "i < n"
-          if (auto condvarR =
-                  dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
-            inputs.push_back(condvarR);
+          if (auto condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
+            inputsBuffer.insert(condvarR);
             outs() << condvarR->getNameAsString() << ", ";
           }
           // For ForCondExpr like "i > 10"
@@ -106,7 +104,7 @@ private:
   }
 
   // Handling the increment expression
-  void handleForInc(Expr *inc) {
+  void handleForInc(Expr* inc) {
     if (inc) {
       if (auto unaryOp = dyn_cast<UnaryOperator>(inc)) {
         if (unaryOp->isIncrementDecrementOp()) {
@@ -121,7 +119,7 @@ private:
   }
 
   // Handling the body of the for loop
-  void handleForBody(Stmt *body) {
+  void handleForBody(Stmt* body) {
     if (body) {
       if (auto bodyStmt = dyn_cast<CompoundStmt>(body)) {
         auto it = bodyStmt->children().begin();
@@ -129,7 +127,7 @@ private:
         while (it != bodyStmt->children().end()) {
           // Checking for nested loops
           if (auto nestedFor = dyn_cast<ForStmt>(*it)) {
-            VisitForStmt(nestedFor);
+            VisitForStmt(nestedFor, true);
           }
           it++;
         }
@@ -141,9 +139,9 @@ private:
 
 class FindForCondConsumer : public clang::ASTConsumer {
 public:
-  explicit FindForCondConsumer(ASTContext *Context) : Visitor(Context) {}
+  explicit FindForCondConsumer(ASTContext* Context) : Visitor(Context) {}
 
-  virtual void HandleTranslationUnit(clang::ASTContext &Context) {
+  virtual void HandleTranslationUnit(clang::ASTContext& Context) {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
   }
 
@@ -153,25 +151,22 @@ private:
 
 class FindForCondAction : public clang::ASTFrontendAction {
 public:
-  virtual std::unique_ptr<clang::ASTConsumer>
-  CreateASTConsumer(clang::CompilerInstance &Compiler, llvm::StringRef InFile) {
+  virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& Compiler,
+                                                                llvm::StringRef InFile) {
     return std::make_unique<FindForCondConsumer>(&Compiler.getASTContext());
   }
 };
 
-int main(int argc, const char **argv) {
-  auto ExpectedParser =
-      CommonOptionsParser::create(argc, argv, MatcherCategory);
+int main(int argc, const char** argv) {
+  auto ExpectedParser = CommonOptionsParser::create(argc, argv, MatcherCategory);
   if (!ExpectedParser) {
     // Fail gracefully for unsupported options.
     llvm::errs() << ExpectedParser.takeError();
     return 1;
   }
-  CommonOptionsParser &OptionsParser = ExpectedParser.get();
+  CommonOptionsParser& OptionsParser = ExpectedParser.get();
 
-  ClangTool Tool(OptionsParser.getCompilations(),
-                 OptionsParser.getSourcePathList());
+  ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-  return Tool.run(
-      clang::tooling::newFrontendActionFactory<FindForCondAction>().get());
+  return Tool.run(clang::tooling::newFrontendActionFactory<FindForCondAction>().get());
 }
