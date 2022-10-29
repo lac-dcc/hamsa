@@ -18,10 +18,15 @@ public:
 
   bool VisitForStmt(ForStmt* fstmt, bool nested = false) {
 
-    handleForInit(fstmt->getInit());
-    handleForCond(fstmt->getCond());
-    handleForInc(fstmt->getInc());
+    std::string induction, valBegin, valEnd, increment;
+    handleForInit(fstmt->getInit(), induction, valBegin);
+    handleForCond(fstmt->getCond(), valEnd);
+    handleForInc(fstmt->getInc(), increment);
+
+    outs() << induction << ", <" << valBegin << ", " << valEnd << ", " << increment << "> ";
+    outs() << "{ \n";
     handleForBody(fstmt->getBody());
+    outs() << "}\n";
 
     if (inputsBuffer.size() != 0 && nested == false) {
       bool isFirst = true;
@@ -44,38 +49,37 @@ private:
   SmallSet<VarDecl*, 6> inputsBuffer;
 
   // Handling the initialization statement
-  void handleForInit(Stmt* init) {
+  void handleForInit(Stmt* init, std::string &induc, std::string &valBegin) {
     if (init) {
       // Initialization as assignment expression
       if (auto assign = dyn_cast<BinaryOperator>(init)) {
         if (assign->isAssignmentOp()) {
           if (auto initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
-            outs() << initVar->getNameAsString() << ", <";
+            induc = initVar->getNameAsString();
 
           // Initialization with RHS as an integer
           if (auto initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
-            outs() << (int)initValInt->getValue().roundToDouble() << ", ";
-          }
-          // Initialization with RHS as another variable
-          else if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+            valBegin = std::to_string((int)initValInt->getValue().roundToDouble());
+          } else if (auto initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
             inputsBuffer.insert(initDeclRef);
-            outs() << initDeclRef->getNameAsString() << ", ";
+            valBegin = initDeclRef->getNameAsString();
           }
         }
       }
       // Initialzation with a var declaration
       else if (auto varDeclStmt = dyn_cast<DeclStmt>(init)) {
         if (auto valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
-          outs() << valDecl->getNameAsString() << ", <";
+          induc = valDecl->getNameAsString();
+
           // Initialization with an integer
-          if (auto varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
-            outs() << varDeclInt->getValue() << ", ";
-          }
+          if (auto varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit()))
+            valBegin = std::to_string((int)varDeclInt->getValue().roundToDouble());
+
           // Initialization with another variable
           else if (auto varDeclRef =
                        dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
             inputsBuffer.insert(varDeclRef);
-            outs() << varDeclRef->getNameAsString() << ", ";
+            valBegin = varDeclRef->getNameAsString();
           }
         }
       }
@@ -83,7 +87,7 @@ private:
   }
 
   // Handling the condition expression
-  void handleForCond(Expr* cond) {
+  void handleForCond(Expr* cond, std::string &valEnd) {
     if (cond) {
       if (auto bo = dyn_cast<BinaryOperator>(cond)) {
         auto boolRHS = bo->getRHS();
@@ -92,11 +96,11 @@ private:
           // For ForCondExpr like "i < n"
           if (auto condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
             inputsBuffer.insert(condvarR);
-            outs() << condvarR->getNameAsString() << ", ";
+            valEnd = condvarR->getNameAsString();
           }
           // For ForCondExpr like "i > 10"
           else if (auto condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
-            outs() << (int)condvalR->getValue().roundToDouble() << ", ";
+            valEnd = std::to_string((int)condvalR->getValue().roundToDouble());
           }
         }
       }
@@ -104,14 +108,14 @@ private:
   }
 
   // Handling the increment expression
-  void handleForInc(Expr* inc) {
+  void handleForInc(Expr* inc, std::string &increment) {
     if (inc) {
       if (auto unaryOp = dyn_cast<UnaryOperator>(inc)) {
         if (unaryOp->isIncrementDecrementOp()) {
           if (unaryOp->isDecrementOp()) {
-            outs() << "-1> ";
+            increment = "-1";
           } else {
-            outs() << "1> ";
+            increment = "1";
           }
         }
       }
@@ -123,7 +127,6 @@ private:
     if (body) {
       if (auto bodyStmt = dyn_cast<CompoundStmt>(body)) {
         auto it = bodyStmt->children().begin();
-        outs() << "{\n";
         while (it != bodyStmt->children().end()) {
           // Checking for nested loops
           if (auto nestedFor = dyn_cast<ForStmt>(*it)) {
@@ -131,7 +134,6 @@ private:
           }
           it++;
         }
-        outs() << "}\n";
       }
     }
   }
