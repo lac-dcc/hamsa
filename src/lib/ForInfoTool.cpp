@@ -17,7 +17,6 @@ public:
   explicit FindForCondVisitor(ASTContext* Context) : Context(Context) {}
 
   bool VisitForStmt(ForStmt* fstmt, bool nested = false) {
-
     std::string induction, valBegin, valEnd, increment;
     handleForInit(fstmt->getInit(), induction, valBegin);
     handleForCond(fstmt->getCond(), valEnd);
@@ -49,7 +48,7 @@ private:
   SmallSet<VarDecl*, 6> inputsBuffer;
 
   // Handling the initialization statement
-  void handleForInit(Stmt* init, std::string &induc, std::string &valBegin) {
+  void handleForInit(Stmt* init, std::string& induc, std::string& valBegin) {
     if (init) {
       // Initialization as assignment expression
       if (auto assign = dyn_cast<BinaryOperator>(init)) {
@@ -74,7 +73,6 @@ private:
           // Initialization with an integer
           if (auto varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit()))
             valBegin = std::to_string((int)varDeclInt->getValue().roundToDouble());
-
           // Initialization with another variable
           else if (auto varDeclRef =
                        dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
@@ -87,7 +85,7 @@ private:
   }
 
   // Handling the condition expression
-  void handleForCond(Expr* cond, std::string &valEnd) {
+  void handleForCond(Expr* cond, std::string& valEnd) {
     if (cond) {
       if (auto bo = dyn_cast<BinaryOperator>(cond)) {
         auto boolRHS = bo->getRHS();
@@ -108,15 +106,14 @@ private:
   }
 
   // Handling the increment expression
-  void handleForInc(Expr* inc, std::string &increment) {
+  void handleForInc(Expr* inc, std::string& increment) {
     if (inc) {
       if (auto unaryOp = dyn_cast<UnaryOperator>(inc)) {
         if (unaryOp->isIncrementDecrementOp()) {
-          if (unaryOp->isDecrementOp()) {
+          if (unaryOp->isDecrementOp())
             increment = "-1";
-          } else {
+          else
             increment = "1";
-          }
         }
       }
     }
@@ -129,9 +126,9 @@ private:
         auto it = bodyStmt->children().begin();
         while (it != bodyStmt->children().end()) {
           // Checking for nested loops
-          if (auto nestedFor = dyn_cast<ForStmt>(*it)) {
+          if (auto nestedFor = dyn_cast<ForStmt>(*it))
             VisitForStmt(nestedFor, true);
-          }
+
           it++;
         }
       }
