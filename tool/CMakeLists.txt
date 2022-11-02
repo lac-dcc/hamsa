@@ -44,7 +44,7 @@ message("LLVM STATUS:
 )
 
 # Set the LLVM header and library paths
-include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/include)
 link_directories(${LLVM_LIBRARY_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
@@ -72,4 +72,4 @@ if (NOT LLVM_ENABLE_RTTI)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-rtti")
 endif()
 
-add_subdirectory(lib)
+add_subdirectory(src)
