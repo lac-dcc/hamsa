@@ -6,7 +6,7 @@ add_definitions(${LLVM_DEFINITIONS})
 add_executable(ForInfoTool main.cpp
                 ForInfoTool.cpp)
 
-target_link_libraries(main 
+target_link_libraries(ForInfoTool
     clangAST
     clangASTMatchers
     clangBasic
