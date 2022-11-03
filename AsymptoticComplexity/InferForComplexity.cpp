@@ -5,15 +5,15 @@ using namespace std;
 string ForInfoTool = "../tool/build/bin/ForInfoTool";
 
 string calculateSingleCost(string init, string cond, string inc) {
-  if (isdigit(init[0]) && isdigit(cond[0]) && isdigit(inc[0])) {
+  if (isdigit(init[0]) && isdigit(cond[0]) && isdigit(inc[0]))
     return "1";
-  } else if (isdigit(init[0]) && !isdigit(cond[0]) && isdigit(inc[0])) {
+  else if (isdigit(init[0]) && !isdigit(cond[0]) && isdigit(inc[0]))
     return "n";
-  } else
+  else
     return "x";
 }
 
-string CalculateCumulativeCost(string cumulative) {
+string calculateCumulativeCost(string cumulative) {
   int cN = 0, cConst = 0;
   for (int i = 0; i < cumulative.length(); i++) {
     if (cumulative[i] == 'n')
@@ -26,12 +26,12 @@ string CalculateCumulativeCost(string cumulative) {
       break;
     }
   }
-  if (cN == 0) {
+  if (cN == 0)
     return "O(1)";
-  } else if (cN > 0) {
-   return  "O(n^" + to_string(cN) + ")";
-  } else return "Undefined";
-
+  else if (cN > 0)
+    return "O(n^" + to_string(cN) + ")";
+  else
+    return "Undefined";
 }
 
 int main(int argc, char* argv[]) {
@@ -40,8 +40,7 @@ int main(int argc, char* argv[]) {
   string command = ForInfoTool + " " + argv[1] + " > temp.txt";
   system(command.c_str());
 
-  fstream infos;
-  infos.open("temp.txt", fstream::in);
+  fstream infos("temp.txt");
 
   string induc, infosBuffer;
   string init, cond, inc;
@@ -52,8 +51,8 @@ int main(int argc, char* argv[]) {
     if (infosBuffer == "}") {
       brackets--;
       if (brackets == 0) {
-        cout << CalculateCumulativeCost(costBuffer) << endl;
-        costBuffer = "";
+        cout << calculateCumulativeCost(costBuffer) << endl;
+        costBuffer.clear();
       }
     } else if (infosBuffer[0] == '[') {
       while (infosBuffer[infosBuffer.length() - 1] != ']') {
@@ -77,6 +76,6 @@ int main(int argc, char* argv[]) {
       costBuffer += calculateSingleCost(init, cond, inc);
     }
   }
-  infos.close();
+
   return 0;
 }
