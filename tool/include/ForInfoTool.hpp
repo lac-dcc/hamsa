@@ -23,7 +23,13 @@ private:
   ASTContext* Context;
 
   // This container is used to store the for's inputs
-  SmallSet<VarDecl*, 6> inputsBuffer;
+  SmallSet<ValueDecl*, 6> inputsBuffer;
+
+  /*
+    DFS traversal that searches for references to variables (inputs) and nested 
+    loops in a loop's body
+  */
+  void DFS(Stmt* children, bool firstCall = true);
 
   // Handling the initialization statement
   void handleForInit(Stmt* init, std::string& induc, std::string& valBegin);
