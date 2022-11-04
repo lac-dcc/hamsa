@@ -23,13 +23,15 @@ private:
   ASTContext* Context;
 
   // This container is used to store the for's inputs
-  SmallSet<ValueDecl*, 6> inputsBuffer;
+  SmallSet<ValueDecl*, 8> inputsBuffer;
+  // Vector of variables declared inside the loop's body
+  SmallVector<VarDecl*, 6> bodyDeclarations;
 
   /*
     DFS traversal that searches for references to variables (inputs) and nested 
     loops in a loop's body
   */
-  void DFS(Stmt* children, bool firstCall = true);
+  void DFS(Stmt* children, bool nested, bool firstCall = true);
 
   // Handling the initialization statement
   void handleForInit(Stmt* init, std::string& induc, std::string& valBegin);
@@ -41,7 +43,7 @@ private:
   void handleForInc(Expr* inc, std::string& increment);
 
   // Handling the body of the for loop
-  void handleForBody(Stmt* body);
+  void handleForBody(Stmt* body, bool nested);
 };
 
 class FindForCondConsumer : public clang::ASTConsumer {
