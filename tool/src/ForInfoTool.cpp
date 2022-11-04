@@ -25,6 +25,22 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   return true;
 }
 
+void FindForCondVisitor::DFS(Stmt* node, bool firstCall) {
+  for (auto it = node->children().begin(); it != node->children().end(); ++it) {
+    if (*it) {
+      if (auto ref = dyn_cast<DeclRefExpr>(*it))
+        inputsBuffer.insert(ref->getDecl());
+      
+      if (firstCall) {
+        if (auto nestedFor = dyn_cast<ForStmt>(*it))
+          VisitForStmt(nestedFor, true);
+      }
+
+      DFS(*it, false);
+    }
+  }
+}
+
 void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::string& valBegin) {
   if (init) {
     // Initialization as assignment expression
@@ -42,7 +58,7 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
         }
       }
     }
-    // Initialzation with a var declaration
+    // Initialization with a var declaration
     else if (auto varDeclStmt = dyn_cast<DeclStmt>(init)) {
       if (auto valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
         induc = valDecl->getNameAsString();
@@ -96,15 +112,7 @@ void FindForCondVisitor::handleForInc(Expr* inc, std::string& increment) {
 
 void FindForCondVisitor::handleForBody(Stmt* body) {
   if (body) {
-    if (auto bodyStmt = dyn_cast<CompoundStmt>(body)) {
-      auto it = bodyStmt->children().begin();
-      while (it != bodyStmt->children().end()) {
-        // Checking for nested loops
-        if (auto nestedFor = dyn_cast<ForStmt>(*it))
-          VisitForStmt(nestedFor, true);
-
-        it++;
-      }
-    }
+    if (auto bodyStmt = dyn_cast<CompoundStmt>(body))
+      DFS(bodyStmt);
   }
 }
