@@ -11,6 +11,17 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   handleForBody(fstmt->getBody(), nested);
   outs() << "}\n";
 
+  // Removing VarDecl from inputs
+  if(bodyDeclarations.size() != 0 && !nested) {
+    for(auto bDecl : bodyDeclarations) {
+      for(auto input : inputsBuffer) {
+        if(input->getNameAsString() == bDecl->getNameAsString()) {
+          inputsBuffer.erase(input);
+        }
+      }
+    }
+  }
+
   if (inputsBuffer.size() != 0 && !nested) {
     bool isFirst = true;
     outs() << "[";
@@ -19,7 +30,6 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
     }
     outs() << "]\n";
   }
-
   if (!nested) {
     inputsBuffer.clear();
     bodyDeclarations.clear();
@@ -74,6 +84,7 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
     else if (auto varDeclStmt = dyn_cast<DeclStmt>(init)) {
       if (auto valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
         induc = valDecl->getNameAsString();
+        bodyDeclarations.push_back(valDecl);
 
         // Initialization with an integer
         if (auto varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit()))
