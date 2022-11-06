@@ -28,7 +28,7 @@ private:
   SmallVector<VarDecl*, 6> bodyDeclarations;
 
   /*
-    DFS traversal that searches for references to variables (inputs) and nested 
+    DFS traversal that searches for references to variables (inputs) and nested
     loops in a loop's body
   */
   void DFS(Stmt* children, bool nested, bool firstCall = true);
@@ -65,6 +65,5 @@ public:
     return std::make_unique<FindForCondConsumer>(&Compiler.getASTContext());
   }
 };
-
 
 #endif
