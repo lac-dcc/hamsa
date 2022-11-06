@@ -38,14 +38,14 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
 }
 
 void FindForCondVisitor::DFS(Stmt* node, bool nested, bool firstCall) {
-  for (auto it = node->child_begin(); it != node->child_end(); ++it) {
+  for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
     if (*it) {
       if (auto* ref = dyn_cast<DeclRefExpr>(*it))
         inputsBuffer.insert(ref->getDecl());
 
       if (!nested) {
         if (auto* decl = dyn_cast<DeclStmt>(*it)) {
-          for (auto* declIt = decl->decl_begin(); declIt != decl->decl_end(); ++declIt) {
+          for (auto declIt = decl->decl_begin(), declEnd = decl->decl_end(); declIt != declEnd; ++declIt) {
             if (auto* varDecl = dyn_cast<VarDecl>(*declIt))
               bodyDeclarations.push_back(varDecl);
           }
