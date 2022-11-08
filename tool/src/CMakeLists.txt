@@ -12,6 +12,7 @@ target_link_libraries(ForInfoTool
     clangBasic
     clangDriver
     clangFrontend
+    clangLex
     clangRewriteFrontend
     clangSerialization
     clangStaticAnalyzerFrontend

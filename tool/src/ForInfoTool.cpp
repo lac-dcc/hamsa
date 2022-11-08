@@ -29,6 +29,7 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
     }
     outs() << "]\n";
   }
+
   if (!nested) {
     inputsBuffer.clear();
     bodyDeclarations.clear();
@@ -37,7 +38,7 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   return true;
 }
 
-void FindForCondVisitor::DFS(Stmt* node, bool nested, bool firstCall) {
+void FindForCondVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
   for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
     if (*it) {
       if (auto* ref = dyn_cast<DeclRefExpr>(*it))
@@ -57,7 +58,18 @@ void FindForCondVisitor::DFS(Stmt* node, bool nested, bool firstCall) {
           VisitForStmt(nestedFor, true);
       }
 
-      DFS(*it, nested, false);
+      traverseForBody(*it, nested, false);
+    }
+  }
+}
+
+void FindForCondVisitor::traverseExpr(Stmt* node) {
+  for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
+    if (*it) {
+      if (auto* ref = dyn_cast<DeclRefExpr>(*it))
+        inputsBuffer.insert(ref->getDecl());
+
+      traverseExpr(*it);
     }
   }
 }
@@ -93,6 +105,10 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
                      dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
           inputsBuffer.insert(varDeclRef);
           valBegin = varDeclRef->getNameAsString();
+        } else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
+          valBegin = Lexer::getSourceText(CharSourceRange::getTokenRange(varDeclExpr->getSourceRange()),
+            Context->getSourceManager(), Context->getLangOpts()).str();
+          traverseExpr(varDeclExpr);
         }
       }
     }
@@ -135,6 +151,6 @@ void FindForCondVisitor::handleForInc(Expr* inc, std::string& increment) {
 void FindForCondVisitor::handleForBody(Stmt* body, bool nested) {
   if (body) {
     if (auto* bodyStmt = dyn_cast<CompoundStmt>(body))
-      DFS(bodyStmt, nested);
+      traverseForBody(bodyStmt, nested);
   }
 }
