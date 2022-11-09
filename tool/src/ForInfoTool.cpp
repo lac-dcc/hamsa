@@ -1,4 +1,6 @@
 #include "ForInfoTool.hpp"
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Lex/Lexer.h"
 
 bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   std::string induction, valBegin, valEnd, increment;
@@ -107,7 +109,7 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
           valBegin = varDeclRef->getNameAsString();
         } else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
           valBegin = Lexer::getSourceText(CharSourceRange::getTokenRange(varDeclExpr->getSourceRange()),
-            Context->getSourceManager(), Context->getLangOpts()).str();
+                                          Context->getSourceManager(), Context->getLangOpts()).str();
           traverseExpr(varDeclExpr);
         }
       }
