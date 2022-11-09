@@ -41,38 +41,40 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
 }
 
 void FindForCondVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
-  for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
-    if (*it) {
-      if (auto* ref = dyn_cast<DeclRefExpr>(*it))
-        this->inputsBuffer.insert(ref->getDecl());
+  for (auto* child : node->children()) {
+    if (!child)
+      continue;
 
-      if (!nested) {
-        if (auto* decl = dyn_cast<DeclStmt>(*it)) {
-          for (auto declIt = decl->decl_begin(), declEnd = decl->decl_end(); declIt != declEnd; ++declIt) {
-            if (auto* varDecl = dyn_cast<VarDecl>(*declIt))
-              this->bodyDeclarations.push_back(varDecl);
-          }
+    if (auto* ref = dyn_cast<DeclRefExpr>(child))
+      this->inputsBuffer.insert(ref->getDecl());
+
+    if (!nested) {
+      if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
+        for (auto* decl : declStmt->decls()) {
+          if (auto* varDecl = dyn_cast<VarDecl>(decl))
+            this->bodyDeclarations.push_back(varDecl);
         }
       }
-
-      if (firstCall) {
-        if (auto* nestedFor = dyn_cast<ForStmt>(*it))
-          VisitForStmt(nestedFor, true);
-      }
-
-      this->traverseForBody(*it, nested, false);
     }
+
+    if (firstCall) {
+      if (auto* nestedFor = dyn_cast<ForStmt>(child))
+        VisitForStmt(nestedFor, true);
+    }
+
+    this->traverseForBody(child, nested, false);
   }
 }
 
 void FindForCondVisitor::traverseExpr(Stmt* node) {
-  for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
-    if (*it) {
-      if (auto* ref = dyn_cast<DeclRefExpr>(*it))
-        this->inputsBuffer.insert(ref->getDecl());
+  for (auto* child : node->children()) {
+    if (!child)
+      continue;
 
-      this->traverseExpr(*it);
-    }
+    if (auto* ref = dyn_cast<DeclRefExpr>(child))
+      this->inputsBuffer.insert(ref->getDecl());
+
+    this->traverseExpr(child);
   }
 }
 
