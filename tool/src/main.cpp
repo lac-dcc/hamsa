@@ -1,4 +1,8 @@
 #include "ForInfoTool.hpp"
+#include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/Tooling.h"
+
+using namespace clang::tooling;
 
 int main(int argc, const char** argv) {
   auto ExpectedParser = CommonOptionsParser::create(argc, argv, MatcherCategory);
@@ -11,5 +15,5 @@ int main(int argc, const char** argv) {
 
   ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-  return Tool.run(clang::tooling::newFrontendActionFactory<FindForCondAction>().get());
+  return Tool.run(newFrontendActionFactory<FindForCondAction>().get());
 }

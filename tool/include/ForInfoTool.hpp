@@ -2,16 +2,12 @@
 #define FOR_INFO_TOOL
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
-#include "clang/Lex/Lexer.h"
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 using namespace clang;
-using namespace clang::tooling;
 using namespace llvm;
 
 static llvm::cl::OptionCategory MatcherCategory("matcher options");
