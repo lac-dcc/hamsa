@@ -9,6 +9,8 @@ string calculateSingleCost(string init, string cond, string inc) {
     return "1";
   else if (isdigit(init[0]) && !isdigit(cond[0]) && isdigit(inc[0]))
     return "n";
+  else if(!isdigit(init[0]) && isdigit(cond[0]) && ( isdigit(inc[1]) || isdigit(inc[1])))
+   return "n";
   else
     return "x";
 }
