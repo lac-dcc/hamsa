@@ -4,37 +4,37 @@
 
 bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   std::string induction, valBegin, valEnd, increment;
-  handleForInit(fstmt->getInit(), induction, valBegin);
-  handleForCond(fstmt->getCond(), valEnd);
-  handleForInc(fstmt->getInc(), increment);
+  this->handleForInit(fstmt->getInit(), induction, valBegin);
+  this->handleForCond(fstmt->getCond(), valEnd);
+  this->handleForInc(fstmt->getInc(), increment);
 
   outs() << induction << ", <" << valBegin << ", " << valEnd << ", " << increment << "> ";
   outs() << "{ \n";
-  handleForBody(fstmt->getBody(), nested);
+  this->handleForBody(fstmt->getBody(), nested);
   outs() << "}\n";
 
   // Removing VarDecl from inputs
-  if (bodyDeclarations.size() != 0 && !nested) {
-    for (auto* bDecl : bodyDeclarations) {
-      for (auto* input : inputsBuffer) {
+  if (this->bodyDeclarations.size() != 0 && !nested) {
+    for (auto* bDecl : this->bodyDeclarations) {
+      for (auto* input : this->inputsBuffer) {
         if (input->getNameAsString() == bDecl->getNameAsString())
-          inputsBuffer.erase(input);
+          this->inputsBuffer.erase(input);
       }
     }
   }
 
-  if (inputsBuffer.size() != 0 && !nested) {
+  if (this->inputsBuffer.size() != 0 && !nested) {
     bool isFirst = true;
     outs() << "[";
-    for (auto* input : inputsBuffer) {
+    for (auto* input : this->inputsBuffer) {
       outs() << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
     }
     outs() << "]\n";
   }
 
   if (!nested) {
-    inputsBuffer.clear();
-    bodyDeclarations.clear();
+    this->inputsBuffer.clear();
+    this->bodyDeclarations.clear();
   }
 
   return true;
@@ -44,13 +44,13 @@ void FindForCondVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall
   for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
     if (*it) {
       if (auto* ref = dyn_cast<DeclRefExpr>(*it))
-        inputsBuffer.insert(ref->getDecl());
+        this->inputsBuffer.insert(ref->getDecl());
 
       if (!nested) {
         if (auto* decl = dyn_cast<DeclStmt>(*it)) {
           for (auto declIt = decl->decl_begin(), declEnd = decl->decl_end(); declIt != declEnd; ++declIt) {
             if (auto* varDecl = dyn_cast<VarDecl>(*declIt))
-              bodyDeclarations.push_back(varDecl);
+              this->bodyDeclarations.push_back(varDecl);
           }
         }
       }
@@ -60,7 +60,7 @@ void FindForCondVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall
           VisitForStmt(nestedFor, true);
       }
 
-      traverseForBody(*it, nested, false);
+      this->traverseForBody(*it, nested, false);
     }
   }
 }
@@ -69,9 +69,9 @@ void FindForCondVisitor::traverseExpr(Stmt* node) {
   for (auto it = node->child_begin(), itEnd = node->child_end(); it != itEnd; ++it) {
     if (*it) {
       if (auto* ref = dyn_cast<DeclRefExpr>(*it))
-        inputsBuffer.insert(ref->getDecl());
+        this->inputsBuffer.insert(ref->getDecl());
 
-      traverseExpr(*it);
+      this->traverseExpr(*it);
     }
   }
 }
@@ -88,7 +88,7 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
         if (auto* initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
           valBegin = std::to_string((int)initValInt->getValue().roundToDouble());
         } else if (auto* initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
-          inputsBuffer.insert(initDeclRef);
+          this->inputsBuffer.insert(initDeclRef);
           valBegin = initDeclRef->getNameAsString();
         }
       }
@@ -97,7 +97,7 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
     else if (auto* varDeclStmt = dyn_cast<DeclStmt>(init)) {
       if (auto* valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
         induc = valDecl->getNameAsString();
-        bodyDeclarations.push_back(valDecl);
+        this->bodyDeclarations.push_back(valDecl);
 
         // Initialization with an integer
         if (auto* varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit()))
@@ -105,12 +105,14 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
         // Initialization with another variable
         else if (auto* varDeclRef =
                      dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
-          inputsBuffer.insert(varDeclRef);
+          this->inputsBuffer.insert(varDeclRef);
           valBegin = varDeclRef->getNameAsString();
         } else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
-          valBegin = Lexer::getSourceText(CharSourceRange::getTokenRange(varDeclExpr->getSourceRange()),
-                                          Context->getSourceManager(), Context->getLangOpts()).str();
-          traverseExpr(varDeclExpr);
+          CharSourceRange srcRange = CharSourceRange::getTokenRange(varDeclExpr->getSourceRange());
+          SourceManager& srcManager = this->Context->getSourceManager();
+          const LangOptions& langOpts = this->Context->getLangOpts();
+          valBegin = Lexer::getSourceText(srcRange, srcManager, langOpts).str();
+          this->traverseExpr(varDeclExpr);
         }
       }
     }
@@ -125,7 +127,7 @@ void FindForCondVisitor::handleForCond(Expr* cond, std::string& valEnd) {
       if (auto* condvarL = dyn_cast<VarDecl>(boolLHS->getReferencedDeclOfCallee())) {
         // For ForCondExpr like "i < n"
         if (auto* condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
-          inputsBuffer.insert(condvarR);
+          this->inputsBuffer.insert(condvarR);
           valEnd = condvarR->getNameAsString();
         }
         // For ForCondExpr like "i > 10"
@@ -153,6 +155,6 @@ void FindForCondVisitor::handleForInc(Expr* inc, std::string& increment) {
 void FindForCondVisitor::handleForBody(Stmt* body, bool nested) {
   if (body) {
     if (auto* bodyStmt = dyn_cast<CompoundStmt>(body))
-      traverseForBody(bodyStmt, nested);
+      this->traverseForBody(bodyStmt, nested);
   }
 }
