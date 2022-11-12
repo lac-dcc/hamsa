@@ -6,7 +6,7 @@
 
 using namespace std;
 
-string ForInfoTool = "../tool/build/bin/ForInfoTool";
+string LoopInfoTool = "../tool/build/bin/LoopInfoTool";
 
 string calculateSingleCost(string init, string cond, string inc) {
   if (isdigit(init[0]) && isdigit(cond[0]) && isdigit(inc[0]))
@@ -37,7 +37,7 @@ void formatCostString(string &cost) {
 int main(int argc, char* argv[]) {
   if (argc != 2)
     return -1;
-  string command = ForInfoTool + " " + argv[1] + " > temp.csv";
+  string command = LoopInfoTool + " " + argv[1] + " > temp.csv";
   system(command.c_str());
 
   fstream infos("temp.csv");

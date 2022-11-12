@@ -1,8 +1,8 @@
-#include "ForInfoTool.hpp"
+#include "LoopInfoTool.hpp"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
 
-bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
+bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   std::string induction, valBegin, valEnd, increment;
   this->handleForInit(fstmt->getInit(), induction, valBegin);
   this->handleForCond(fstmt->getCond(), valEnd);
@@ -40,7 +40,7 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   return true;
 }
 
-void FindForCondVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
+void LoopInfoVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -66,7 +66,7 @@ void FindForCondVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall
   }
 }
 
-void FindForCondVisitor::traverseExpr(Stmt* node) {
+void LoopInfoVisitor::traverseExpr(Stmt* node) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -78,7 +78,7 @@ void FindForCondVisitor::traverseExpr(Stmt* node) {
   }
 }
 
-void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::string& valBegin) {
+void LoopInfoVisitor::handleForInit(Stmt* init, std::string& induc, std::string& valBegin) {
   if (!init)
     return;
 
@@ -113,8 +113,8 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
         valBegin = varDeclRef->getNameAsString();
       } else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
         CharSourceRange srcRange = CharSourceRange::getTokenRange(varDeclExpr->getSourceRange());
-        SourceManager& srcManager = this->Context->getSourceManager();
-        const LangOptions& langOpts = this->Context->getLangOpts();
+        SourceManager& srcManager = this->context->getSourceManager();
+        const LangOptions& langOpts = this->context->getLangOpts();
         valBegin = Lexer::getSourceText(srcRange, srcManager, langOpts).str();
         this->traverseExpr(varDeclExpr);
       }
@@ -122,7 +122,7 @@ void FindForCondVisitor::handleForInit(Stmt* init, std::string& induc, std::stri
   }
 }
 
-void FindForCondVisitor::handleForCond(Expr* cond, std::string& valEnd) {
+void LoopInfoVisitor::handleForCond(Expr* cond, std::string& valEnd) {
   if (!cond)
     return;
 
@@ -143,7 +143,7 @@ void FindForCondVisitor::handleForCond(Expr* cond, std::string& valEnd) {
   }
 }
 
-void FindForCondVisitor::handleForInc(Expr* inc, std::string& increment) {
+void LoopInfoVisitor::handleForInc(Expr* inc, std::string& increment) {
   if (!inc)
     return;
 
@@ -157,7 +157,7 @@ void FindForCondVisitor::handleForInc(Expr* inc, std::string& increment) {
   }
 }
 
-void FindForCondVisitor::handleForBody(Stmt* body, bool nested) {
+void LoopInfoVisitor::handleForBody(Stmt* body, bool nested) {
   if (!body)
     return;
 

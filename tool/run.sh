@@ -2,4 +2,4 @@
 
 PROGRAM=$1
 
-./build/bin/ForInfoTool $PROGRAM
+./build/bin/LoopInfoTool $PROGRAM

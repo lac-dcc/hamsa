@@ -1,8 +1,10 @@
-#include "ForInfoTool.hpp"
+#include "LoopInfoTool.hpp"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 
 using namespace clang::tooling;
+
+static llvm::cl::OptionCategory MatcherCategory("matcher options");
 
 int main(int argc, const char** argv) {
   auto ExpectedParser = CommonOptionsParser::create(argc, argv, MatcherCategory);
@@ -15,5 +17,5 @@ int main(int argc, const char** argv) {
 
   ClangTool Tool(OptionsParser.getCompilations(), OptionsParser.getSourcePathList());
 
-  return Tool.run(newFrontendActionFactory<FindForCondAction>().get());
+  return Tool.run(newFrontendActionFactory<LoopInfoAction>().get());
 }
