@@ -14,12 +14,10 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   outs() << "},";
 
   // Removing VarDecl from inputs
-  if (this->bodyDeclarations.size() != 0 && !nested) {
-    for (auto* bDecl : this->bodyDeclarations) {
-      for (auto* input : this->inputsBuffer) {
-        if (input->getNameAsString() == bDecl->getNameAsString())
-          this->inputsBuffer.erase(input);
-      }
+  if (!this->bodyDeclarations.empty() && !nested) {
+    for (auto* input : this->inputsBuffer) {
+      if (bodyDeclarations.find(input) != bodyDeclarations.end())
+        this->inputsBuffer.erase(input);
     }
   }
 
@@ -52,7 +50,7 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
       if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
         for (auto* decl : declStmt->decls()) {
           if (auto* varDecl = dyn_cast<VarDecl>(decl))
-            this->bodyDeclarations.push_back(varDecl);
+            this->bodyDeclarations.insert(std::make_pair(varDecl, varDecl->getNameAsString()));
         }
       }
     }
@@ -101,7 +99,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, std::string& induc, std::string&
   else if (auto* varDeclStmt = dyn_cast<DeclStmt>(init)) {
     if (auto* valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
       induc = valDecl->getNameAsString();
-      this->bodyDeclarations.push_back(valDecl);
+      this->bodyDeclarations.insert(std::make_pair(valDecl, valDecl->getNameAsString()));
 
       // Initialization with an integer
       if (auto* varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit()))
