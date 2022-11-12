@@ -1,1 +1,1 @@
-c++ src/ForInfoTool.test.cpp -o bin/runTests
+c++ src/LoopInfoTool.test.cpp -o bin/runTests
