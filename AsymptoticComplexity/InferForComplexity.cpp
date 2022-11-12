@@ -1,5 +1,9 @@
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include <sstream>
+#include <string>
+
 using namespace std;
 
 string ForInfoTool = "../tool/build/bin/ForInfoTool";
@@ -7,77 +11,79 @@ string ForInfoTool = "../tool/build/bin/ForInfoTool";
 string calculateSingleCost(string init, string cond, string inc) {
   if (isdigit(init[0]) && isdigit(cond[0]) && isdigit(inc[0]))
     return "1";
-  else if (isdigit(init[0]) && !isdigit(cond[0]) && isdigit(inc[0]))
-    return "n";
-  else if(!isdigit(init[0]) && isdigit(cond[0]) && ( isdigit(inc[1]) || isdigit(inc[1])))
-   return "n";
+  else if (isdigit(init[0]) && !isdigit(cond[0]) && ( isdigit(inc[0]) || isdigit(inc[1])))
+    return cond;
+  else if(!isdigit(init[0]) && isdigit(cond[0]) && ( isdigit(inc[0]) || isdigit(inc[1])))
+   return init;
   else
     return "x";
 }
 
-string calculateCumulativeCost(string cumulative) {
-  int cN = 0, cConst = 0;
-  for (int i = 0; i < cumulative.length(); i++) {
-    if (cumulative[i] == 'n')
-      cN++;
-    else if (cumulative[i] == '1')
-      cConst++;
-    else if (cumulative[i] == 'x') {
-      cN = -1;
-      cConst = -1;
-      break;
+void formatCostString(string &cost) {
+  for(auto it = cost.begin(); it != cost.end(); it++) {
+    if(*it == '*')
+      cost.erase(it);
+    if(*it == '(' && *(it+1) == ')') {
+      cost.erase(it);
+      cost.erase(it);
+    }
+    if(*it == '+' && *(it+1) == ')') {
+      cost.erase(it);
     }
   }
-  if (cN == 0)
-    return "O(1)";
-  else if (cN > 0)
-    return "O(n^" + to_string(cN) + ")";
-  else
-    return "Undefined";
+  cost.erase(cost.end()-1);
 }
 
 int main(int argc, char* argv[]) {
   if (argc != 2)
     return -1;
-  string command = ForInfoTool + " " + argv[1] + " > temp.txt";
+  string command = ForInfoTool + " " + argv[1] + " > temp.csv";
   system(command.c_str());
 
-  fstream infos("temp.txt");
+  fstream infos("temp.csv");
+  vector<string> row;
+  string line, content, temp;
 
-  string induc, infosBuffer;
-  string init, cond, inc;
   string costBuffer = "";
-
+  string induct, init, cond, inc;
   int brackets = 0;
-  while (infos >> infosBuffer) {
-    if (infosBuffer == "}") {
-      brackets--;
-      if (brackets == 0) {
-        cout << calculateCumulativeCost(costBuffer) << endl;
-        costBuffer.clear();
+
+  while (!infos.eof()) {
+    row.clear();
+    getline(infos, line);
+    stringstream s(line);
+
+    while(getline(s, content, ',')) {
+      row.push_back(content);
+    }
+
+    for(auto it = row.begin(); it != row.end(); it++) {
+      if(*it == "}") {
+        brackets--;
+        costBuffer += ")";
+        costBuffer += "+";
+        if(brackets == 0) {
+          formatCostString(costBuffer);
+          cout << "O("<<costBuffer << ")\n";
+          costBuffer.clear();
+        }
       }
-    } else if (infosBuffer[0] == '[') {
-      while (infosBuffer[infosBuffer.length() - 1] != ']') {
-        infos >> infosBuffer;
+      else if(*it == "[") {
+        break;
       }
-    } else {
-      induc = infosBuffer.substr(0, infosBuffer.length() - 1);
-
-      infos >> infosBuffer;
-      init = infosBuffer.substr(1, infosBuffer.length() - 2);
-
-      infos >> infosBuffer;
-      cond = infosBuffer.substr(0, infosBuffer.length() - 1);
-
-      infos >> infosBuffer;
-      inc = (infosBuffer.substr(0, infosBuffer.length() - 1));
-
-      infos >> infosBuffer;
-      brackets++;
-
-      costBuffer += calculateSingleCost(init, cond, inc);
+      else if(*it == "{") {
+        brackets++;
+        costBuffer += "(";
+      } else {
+      induct = *it;
+      init = *(++it);
+      cond = *(++it);
+      inc = *(++it);
+    
+      costBuffer.append(calculateSingleCost(init, cond, inc));
+      costBuffer += "*";
+      }
     }
   }
-
   return 0;
 }
