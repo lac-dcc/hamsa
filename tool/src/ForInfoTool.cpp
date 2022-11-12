@@ -8,10 +8,10 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   this->handleForCond(fstmt->getCond(), valEnd);
   this->handleForInc(fstmt->getInc(), increment);
 
-  outs() << induction << ", <" << valBegin << ", " << valEnd << ", " << increment << "> ";
-  outs() << "{ \n";
+  outs() << induction << "," << valBegin << "," << valEnd << "," << increment << ",";
+  outs() << "{,";
   this->handleForBody(fstmt->getBody(), nested);
-  outs() << "}\n";
+  outs() << "},";
 
   // Removing VarDecl from inputs
   if (this->bodyDeclarations.size() != 0 && !nested) {
@@ -25,11 +25,11 @@ bool FindForCondVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
 
   if (this->inputsBuffer.size() != 0 && !nested) {
     bool isFirst = true;
-    outs() << "[";
+    outs() << "[,";
     for (auto* input : this->inputsBuffer) {
-      outs() << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
+      outs() << (isFirst ? isFirst = false, "" : ",") << input->getNameAsString();
     }
-    outs() << "]\n";
+    outs() << ",]\n";
   }
 
   if (!nested) {
