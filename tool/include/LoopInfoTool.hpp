@@ -5,7 +5,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseMap.h"
 
 using namespace clang;
 using namespace llvm;
@@ -38,7 +38,7 @@ private:
   ASTContext* context; ///< ASTContext to be used by the visitor.
 
   SmallSet<ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
-  SmallVector<VarDecl*, 6> bodyDeclarations; ///< Vector of variables declared inside the loop's body.
+  DenseMap<ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
 
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
