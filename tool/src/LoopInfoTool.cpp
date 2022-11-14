@@ -13,26 +13,27 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
   this->handleForBody(fstmt->getBody(), nested);
   outs() << "},";
 
-  // Removing VarDecl from inputs
-  if (!this->bodyDeclarations.empty() && !nested) {
-    for (auto* input : this->inputsBuffer) {
-      if (bodyDeclarations.find(input) != bodyDeclarations.end())
-        this->inputsBuffer.erase(input);
-    }
-  }
-
-  if (this->inputsBuffer.size() != 0 && !nested) {
-    bool isFirst = true;
-    outs() << "[,";
-    for (auto* input : this->inputsBuffer) {
-      outs() << (isFirst ? isFirst = false, "" : ",") << input->getNameAsString();
-    }
-    outs() << ",]\n";
-  }
-
   if (!nested) {
+    // Removing VarDecl from inputs
+    if (!this->bodyDeclarations.empty()) {
+      for (auto* input : this->inputsBuffer) {
+        if (bodyDeclarations.find(input) != bodyDeclarations.end())
+          this->inputsBuffer.erase(input);
+      }
+    }
+
+    if (!this->inputsBuffer.empty()) {
+      bool isFirst = true;
+      outs() << "[,";
+      for (auto* input : this->inputsBuffer) {
+        outs() << (isFirst ? isFirst = false, "" : ",") << input->getNameAsString();
+      }
+      outs() << ",]";
+    }
+
     this->inputsBuffer.clear();
     this->bodyDeclarations.clear();
+    outs() << '\n';
   }
 
   return true;
