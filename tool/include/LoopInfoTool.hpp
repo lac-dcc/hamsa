@@ -83,6 +83,13 @@ private:
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    */
   void handleForBody(Stmt* body, bool nested);
+
+  /**
+   * \brief Auxiliary method used to get the content of an expression as a string.
+   * \param expr Target expression
+   * \return The expression \p expr as a string.
+   */
+  std::string getExprAsString(Expr* expr);
 };
 
 /**
