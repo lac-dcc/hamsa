@@ -89,9 +89,16 @@ void LoopInfoVisitor::handleForInit(Stmt* init, std::string& induc, std::string&
       // Initialization with RHS as an integer
       if (auto* initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
         valBegin = std::to_string((int)initValInt->getValue().roundToDouble());
-      } else if (auto* initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
+      }
+      // Initialization with RHS as another variable
+      else if (auto* initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
         this->inputsBuffer.insert(initDeclRef);
         valBegin = initDeclRef->getNameAsString();
+      }
+      // Initialization with RHS as an expression
+      else if (auto* initExpr = dyn_cast<Expr>(assign->getRHS())) {
+        valBegin = this->getExprAsString(initExpr);
+        this->traverseExpr(initExpr);
       }
     }
   }
@@ -101,19 +108,19 @@ void LoopInfoVisitor::handleForInit(Stmt* init, std::string& induc, std::string&
       induc = valDecl->getNameAsString();
       this->bodyDeclarations.insert(std::make_pair(valDecl, valDecl->getNameAsString()));
 
-      // Initialization with an integer
-      if (auto* varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit()))
+      // Initialization as an integer
+      if (auto* varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
         valBegin = std::to_string((int)varDeclInt->getValue().roundToDouble());
-      // Initialization with another variable
+      }
+      // Initialization as another variable
       else if (auto* varDeclRef =
                    dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
         this->inputsBuffer.insert(varDeclRef);
         valBegin = varDeclRef->getNameAsString();
-      } else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
-        CharSourceRange srcRange = CharSourceRange::getTokenRange(varDeclExpr->getSourceRange());
-        SourceManager& srcManager = this->context->getSourceManager();
-        const LangOptions& langOpts = this->context->getLangOpts();
-        valBegin = Lexer::getSourceText(srcRange, srcManager, langOpts).str();
+      }
+      // Initialization as an expression
+      else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
+        valBegin = this->getExprAsString(varDeclExpr);
         this->traverseExpr(varDeclExpr);
       }
     }
@@ -161,4 +168,11 @@ void LoopInfoVisitor::handleForBody(Stmt* body, bool nested) {
 
   if (auto* bodyStmt = dyn_cast<CompoundStmt>(body))
     this->traverseForBody(bodyStmt, nested);
+}
+
+std::string LoopInfoVisitor::getExprAsString(Expr* expr) {
+  CharSourceRange srcRange = CharSourceRange::getTokenRange(expr->getSourceRange());
+  SourceManager& srcManager = this->context->getSourceManager();
+  const LangOptions& langOpts = this->context->getLangOpts();
+  return Lexer::getSourceText(srcRange, srcManager, langOpts).str();
 }
