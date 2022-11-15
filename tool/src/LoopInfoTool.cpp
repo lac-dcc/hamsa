@@ -157,12 +157,24 @@ void LoopInfoVisitor::handleForInc(Expr* inc, std::string& increment) {
   if (!inc)
     return;
 
+  // Increment expression uses an unary operator
   if (auto* unaryOp = dyn_cast<UnaryOperator>(inc)) {
     if (unaryOp->isIncrementDecrementOp()) {
       if (unaryOp->isDecrementOp())
         increment = "-1";
       else
         increment = "1";
+    }
+  }
+  // Increment expression uses a binary operator
+  else if (auto* binaryOp = dyn_cast<BinaryOperator>(inc)) {
+    if (binaryOp->isCompoundAssignmentOp()) {
+      this->traverseExpr(binaryOp->getRHS());
+      if (binaryOp->getOpcode() == BO_AddAssign) {
+        increment = this->getExprAsString(binaryOp->getRHS());
+      } else if (binaryOp->getOpcode() == BO_SubAssign) {
+        increment = "-(" + this->getExprAsString(binaryOp->getRHS()) + ")";
+      }
     }
   }
 }
