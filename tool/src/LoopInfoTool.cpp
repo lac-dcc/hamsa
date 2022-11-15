@@ -145,6 +145,10 @@ void LoopInfoVisitor::handleForCond(Expr* cond, std::string& valEnd) {
       else if (auto* condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
         valEnd = std::to_string((int)condvalR->getValue().roundToDouble());
       }
+      else if(auto* condvalR = dyn_cast<Expr>(boolRHS)) {
+        valEnd = this->getExprAsString(condvalR);
+        traverseExpr(condvalR);
+      }
     }
   }
 }
