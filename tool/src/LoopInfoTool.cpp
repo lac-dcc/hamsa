@@ -44,8 +44,10 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
     if (!child)
       continue;
 
-    if (auto* ref = dyn_cast<DeclRefExpr>(child))
-      this->inputsBuffer.insert(ref->getDecl());
+    if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
+      if (!ref->getDecl()->isFunctionOrFunctionTemplate())
+        this->inputsBuffer.insert(ref->getDecl());
+    }
 
     if (!nested) {
       if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
@@ -70,8 +72,10 @@ void LoopInfoVisitor::traverseExpr(Stmt* node) {
     if (!child)
       continue;
 
-    if (auto* ref = dyn_cast<DeclRefExpr>(child))
-      this->inputsBuffer.insert(ref->getDecl());
+    if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
+      if (!ref->getDecl()->isFunctionOrFunctionTemplate())
+        this->inputsBuffer.insert(ref->getDecl());
+    }
 
     this->traverseExpr(child);
   }
