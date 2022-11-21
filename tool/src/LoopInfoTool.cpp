@@ -2,44 +2,40 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
 
-bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, bool nested) {
-  std::string induction, valBegin, valEnd, increment;
-  this->handleForInit(fstmt->getInit(), induction, valBegin);
-  this->handleForCond(fstmt->getCond(), valEnd);
-  this->handleForInc(fstmt->getInc(), increment);
+bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, Kernel* parent) {
+  Kernel* kernel;
+  int64_t id = fstmt->getID(*this->context);
+  if (kernels.find(id) != kernels.end())
+    kernel = kernels[id];
+  else {
+    kernel = new Kernel;
+    kernels.insert(std::make_pair(id, kernel));
 
-  outs() << induction << "," << valBegin << "," << valEnd << "," << increment << ",";
-  outs() << "{,";
-  this->handleForBody(fstmt->getBody(), nested);
-  outs() << "},";
-
-  if (!nested) {
-    // Removing VarDecl from inputs
-    if (!this->bodyDeclarations.empty()) {
-      for (auto* input : this->inputsBuffer) {
-        if (bodyDeclarations.find(input) != bodyDeclarations.end())
-          this->inputsBuffer.erase(input);
-      }
+    if (parent != nullptr) {
+      kernel->parent = parent;
+      return true;
     }
-
-    if (!this->inputsBuffer.empty()) {
-      bool isFirst = true;
-      outs() << "[,";
-      for (auto* input : this->inputsBuffer) {
-        outs() << (isFirst ? isFirst = false, "" : ",") << input->getNameAsString();
-      }
-      outs() << ",]";
-    }
-
-    this->inputsBuffer.clear();
-    this->bodyDeclarations.clear();
-    outs() << '\n';
   }
+
+  this->handleForInit(fstmt->getInit(), kernel);
+  this->handleForCond(fstmt->getCond(), kernel);
+  this->handleForInc(fstmt->getInc(), kernel);
+  this->handleForBody(fstmt->getBody(), kernel);
+
+  // Removing VarDecl from inputs
+  if (!this->bodyDeclarations.empty()) {
+    for (auto* input : kernel->inputs) {
+      if (bodyDeclarations.find(input) != bodyDeclarations.end())
+        kernel->inputs.erase(input);
+    }
+  }
+
+  this->bodyDeclarations.clear();
 
   return true;
 }
 
-void LoopInfoVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
+void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -49,21 +45,19 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, bool nested, bool firstCall) {
         this->inputsBuffer.insert(ref->getDecl());
     }
 
-    if (!nested) {
-      if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
-        for (auto* decl : declStmt->decls()) {
-          if (auto* varDecl = dyn_cast<VarDecl>(decl))
-            this->bodyDeclarations.insert(std::make_pair(varDecl, varDecl->getNameAsString()));
-        }
+    if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
+      for (auto* decl : declStmt->decls()) {
+        if (auto* varDecl = dyn_cast<VarDecl>(decl))
+          this->bodyDeclarations.insert(std::make_pair(varDecl, varDecl->getNameAsString()));
       }
     }
 
     if (firstCall) {
       if (auto* nestedFor = dyn_cast<ForStmt>(child))
-        VisitForStmt(nestedFor, true);
+        VisitForStmt(nestedFor, kernel);
     }
 
-    this->traverseForBody(child, nested, false);
+    this->traverseForBody(child, kernel, false);
   }
 }
 
@@ -81,7 +75,7 @@ void LoopInfoVisitor::traverseExpr(Stmt* node) {
   }
 }
 
-void LoopInfoVisitor::handleForInit(Stmt* init, std::string& induc, std::string& valBegin) {
+void LoopInfoVisitor::handleForInit(Stmt* init, Kernel* kernel) {
   if (!init)
     return;
 
@@ -89,106 +83,63 @@ void LoopInfoVisitor::handleForInit(Stmt* init, std::string& induc, std::string&
   if (auto* assign = dyn_cast<BinaryOperator>(init)) {
     if (assign->isAssignmentOp()) {
       if (auto* initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
-        induc = initVar->getNameAsString();
+        kernel->induc = initVar;
 
-      // Initialization with RHS as an integer
-      if (auto* initValInt = dyn_cast<IntegerLiteral>(assign->getRHS())) {
-        valBegin = std::to_string((int)initValInt->getValue().roundToDouble());
-      }
+      kernel->init = assign->getRHS();
+
       // Initialization with RHS as another variable
-      else if (auto* initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee())) {
-        this->inputsBuffer.insert(initDeclRef);
-        valBegin = initDeclRef->getNameAsString();
-      }
+      if (auto* initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee()))
+        kernel->inputs.insert(initDeclRef);
       // Initialization with RHS as an expression
-      else if (auto* initExpr = dyn_cast<Expr>(assign->getRHS())) {
-        valBegin = this->getExprAsString(initExpr);
+      else if (auto* initExpr = dyn_cast<Expr>(assign->getRHS()))
         this->traverseExpr(initExpr);
-      }
     }
   }
   // Initialization with a var declaration
   else if (auto* varDeclStmt = dyn_cast<DeclStmt>(init)) {
     if (auto* valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
-      induc = valDecl->getNameAsString();
+      kernel->induc = valDecl;
       this->bodyDeclarations.insert(std::make_pair(valDecl, valDecl->getNameAsString()));
 
-      // Initialization as an integer
-      if (auto* varDeclInt = dyn_cast<IntegerLiteral>(valDecl->getInit())) {
-        valBegin = std::to_string((int)varDeclInt->getValue().roundToDouble());
-      }
+      kernel->init = valDecl->getInit();
+
       // Initialization as another variable
-      else if (auto* varDeclRef =
-                   dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee())) {
-        this->inputsBuffer.insert(varDeclRef);
-        valBegin = varDeclRef->getNameAsString();
-      }
+      if (auto* varDeclRef = dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee()))
+        kernel->inputs.insert(varDeclRef);
       // Initialization as an expression
-      else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit())) {
-        valBegin = this->getExprAsString(varDeclExpr);
+      else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit()))
         this->traverseExpr(varDeclExpr);
-      }
     }
   }
 }
 
-void LoopInfoVisitor::handleForCond(Expr* cond, std::string& valEnd) {
+void LoopInfoVisitor::handleForCond(Expr* cond, Kernel* kernel) {
   if (!cond)
     return;
 
   if (auto* bo = dyn_cast<BinaryOperator>(cond)) {
-    auto* boolRHS = bo->getRHS();
-    auto* boolLHS = bo->getLHS();
-    if (auto* condvarL = dyn_cast<VarDecl>(boolLHS->getReferencedDeclOfCallee())) {
-      // For ForCondExpr like "i < n"
-      if (auto* condvarR = dyn_cast<VarDecl>(boolRHS->getReferencedDeclOfCallee())) {
-        this->inputsBuffer.insert(condvarR);
-        valEnd = condvarR->getNameAsString();
-      }
-      // For ForCondExpr like "i > 10"
-      else if (auto* condvalR = dyn_cast<IntegerLiteral>(boolRHS)) {
-        valEnd = std::to_string((int)condvalR->getValue().roundToDouble());
-      }
-      else if(auto* condvalR = dyn_cast<Expr>(boolRHS)) {
-        valEnd = this->getExprAsString(condvalR);
-        traverseExpr(condvalR);
-      }
-    }
+    kernel->limit = bo->getRHS();
+
+    if (auto* condvarR = dyn_cast<VarDecl>(bo->getRHS()->getReferencedDeclOfCallee()))
+      kernel->inputs.insert(condvarR);
+    else if(auto* condvalR = dyn_cast<Expr>(bo->getRHS())) 
+      this->traverseExpr(condvalR);
   }
 }
 
-void LoopInfoVisitor::handleForInc(Expr* inc, std::string& increment) {
+void LoopInfoVisitor::handleForInc(Expr* inc, Kernel* kernel) {
   if (!inc)
     return;
 
-  // Increment expression uses an unary operator
-  if (auto* unaryOp = dyn_cast<UnaryOperator>(inc)) {
-    if (unaryOp->isIncrementDecrementOp()) {
-      if (unaryOp->isDecrementOp())
-        increment = "-1";
-      else
-        increment = "1";
-    }
-  }
-  // Increment expression uses a binary operator
-  else if (auto* binaryOp = dyn_cast<BinaryOperator>(inc)) {
-    if (binaryOp->isCompoundAssignmentOp()) {
-      this->traverseExpr(binaryOp->getRHS());
-      if (binaryOp->getOpcode() == BO_AddAssign) {
-        increment = this->getExprAsString(binaryOp->getRHS());
-      } else if (binaryOp->getOpcode() == BO_SubAssign) {
-        increment = "-(" + this->getExprAsString(binaryOp->getRHS()) + ")";
-      }
-    }
-  }
+  kernel->inc = inc;
 }
 
-void LoopInfoVisitor::handleForBody(Stmt* body, bool nested) {
+void LoopInfoVisitor::handleForBody(Stmt* body, Kernel* kernel) {
   if (!body)
     return;
 
   if (auto* bodyStmt = dyn_cast<CompoundStmt>(body))
-    this->traverseForBody(bodyStmt, nested);
+    this->traverseForBody(bodyStmt, kernel);
 }
 
 std::string LoopInfoVisitor::getExprAsString(Expr* expr) {
