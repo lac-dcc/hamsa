@@ -10,6 +10,15 @@
 using namespace clang;
 using namespace llvm;
 
+struct Kernel {
+  VarDecl* induc;
+  Expr* init;
+  Expr* limit;
+  Expr* inc;
+  SmallSet<ValueDecl*, 8> inputs;
+  Kernel* parent;
+};
+
 /**
  * \class LoopInfoVisitor
  *
@@ -27,18 +36,25 @@ public:
    */
   explicit LoopInfoVisitor(ASTContext* context) : context(context) {}
 
+  ~LoopInfoVisitor() {
+    for (auto it = kernels.begin(), end = kernels.end(); it != end; ++it)
+      delete it->second;
+  }
+
   /**
    * \brief Visit method to be applied to ForStmt nodes.
    * \param fstmt ForStmt node being currently visited.
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    */
-  bool VisitForStmt(ForStmt* fstmt, bool nested = false);
+  bool VisitForStmt(ForStmt* fstmt, Kernel* parent = nullptr);
+  // bool VisitForStmt(ForStmt* fstmt, bool nested = false);
 
 private:
   ASTContext* context; ///< ASTContext to be used by the visitor.
 
   SmallSet<ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   DenseMap<ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
+  DenseMap<int64_t, Kernel*> kernels;
 
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
@@ -47,7 +63,7 @@ private:
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    * \param firstCall Flag to distinguish recursive calls from normal ones.
    */
-  void traverseForBody(Stmt* node, bool nested, bool firstCall = true);
+  void traverseForBody(Stmt* node, Kernel* kernel, bool firstCall = true);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.
@@ -61,28 +77,28 @@ private:
    * \param induc String that will hold the name of the induction variable's name.
    * \param valBegin String that will hold the initial value of the induction variable.
    */
-  void handleForInit(Stmt* init, std::string& induc, std::string& valBegin);
+  void handleForInit(Stmt* init, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the condition expression.
    * \param cond Condition expression.
    * \param valEnd String that will hold the final value of the induction variable.
    */
-  void handleForCond(Expr* cond, std::string& valEnd);
+  void handleForCond(Expr* cond, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the increment expression.
    * \param inc Increment expression.
    * \param increment String that will hold the value of the "step" in the increment expression.
    */
-  void handleForInc(Expr* inc, std::string& increment);
+  void handleForInc(Expr* inc, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the body of the for loop.
    * \param body Statement that represents the for's body.
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    */
-  void handleForBody(Stmt* body, bool nested);
+  void handleForBody(Stmt* body, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to get the content of an expression as a string.
