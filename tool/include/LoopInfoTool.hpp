@@ -4,19 +4,25 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 
 using namespace clang;
 using namespace llvm;
 
+/**
+ * \struct Kernel
+ *
+ * \brief Data structure used to represent a kernel. It contains any information
+ * that might be useful to infer the kernel's complexity.
+ */
 struct Kernel {
-  VarDecl* induc;
-  Expr* init;
-  Expr* limit;
-  Expr* inc;
-  SmallSet<ValueDecl*, 8> inputs;
-  Kernel* parent;
+  VarDecl* induc;                 ///< Induction variable.
+  Expr* init;                     ///< Induction variable's initial value.
+  Expr* limit;                    ///< Induction variable's limit.
+  Expr* inc;                      ///< Induction variable's increment at each iteration.
+  SmallSet<ValueDecl*, 8> inputs; ///< Set of inputs of the kernel.
+  Kernel* parent = nullptr;       ///< Parent kernel (if there is any).
 };
 
 /**
@@ -36,6 +42,9 @@ public:
    */
   explicit LoopInfoVisitor(ASTContext* context) : context(context) {}
 
+  /**
+   * \brief Destructor method.
+   */
   ~LoopInfoVisitor() {
     for (auto it = kernels.begin(), end = kernels.end(); it != end; ++it)
       delete it->second;
@@ -44,16 +53,19 @@ public:
   /**
    * \brief Visit method to be applied to ForStmt nodes.
    * \param fstmt ForStmt node being currently visited.
-   * \param nested Flag that indicates if the current ForStmt is a nested for.
    */
-  bool VisitForStmt(ForStmt* fstmt, Kernel* parent = nullptr);
-  // bool VisitForStmt(ForStmt* fstmt, bool nested = false);
+  bool VisitForStmt(ForStmt* fstmt);
 
+  /**
+   * \brief Getter for the kernels attribute.
+   * \return Hash table of kernels.
+   */
   DenseMap<int64_t, Kernel*> getKernels();
+
 private:
   ASTContext* context; ///< ASTContext to be used by the visitor.
 
-  DenseMap<int64_t, Kernel*> kernels;
+  DenseMap<int64_t, Kernel*> kernels;   ///< Hash table of kernels identified during the Visitor's execution.
   SmallSet<ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   DenseMap<ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
 
@@ -69,44 +81,37 @@ private:
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.
    * \param node Root of the subtree.
+   * \param kernel Kernel being visited.
    */
-  void traverseExpr(Stmt* node);
+  void traverseExpr(Stmt* node, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the initialization statement of a for loop.
    * \param init Initialization statement.
-   * \param induc String that will hold the name of the induction variable's name.
-   * \param valBegin String that will hold the initial value of the induction variable.
+   * \param kernel Kernel being visited.
    */
   void handleForInit(Stmt* init, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the condition expression.
    * \param cond Condition expression.
-   * \param valEnd String that will hold the final value of the induction variable.
+   * \param kernel Kernel being visited.
    */
   void handleForCond(Expr* cond, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the increment expression.
    * \param inc Increment expression.
-   * \param increment String that will hold the value of the "step" in the increment expression.
+   * \param kernel Kernel being visited.
    */
   void handleForInc(Expr* inc, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the body of the for loop.
    * \param body Statement that represents the for's body.
-   * \param nested Flag that indicates if the current ForStmt is a nested for.
+   * \param kernel Kernel being visited.
    */
   void handleForBody(Stmt* body, Kernel* kernel);
-
-  /**
-   * \brief Auxiliary method used to get the content of an expression as a string.
-   * \param expr Target expression
-   * \return The expression \p expr as a string.
-   */
-  std::string getExprAsString(Expr* expr);
 };
 
 /**
@@ -119,6 +124,7 @@ public:
   explicit LoopInfoConsumer(ASTContext* Context) : visitor(Context) {}
 
   virtual void HandleTranslationUnit(ASTContext& Context);
+
 private:
   LoopInfoVisitor visitor;
 };

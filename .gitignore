@@ -1,5 +1,6 @@
 .vscode/
 build/
 results/
+tool/output/
 log.txt
 temp.*

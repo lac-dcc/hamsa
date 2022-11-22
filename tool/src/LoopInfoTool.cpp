@@ -1,9 +1,9 @@
 #include "LoopInfoTool.hpp"
+#include "Printer.hpp"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
-#include "Printer.hpp"
 
-bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, Kernel* parent) {
+bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   Kernel* kernel;
   int64_t id = fstmt->getID(*this->context);
   if (kernels.find(id) != kernels.end())
@@ -11,11 +11,6 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, Kernel* parent) {
   else {
     kernel = new Kernel;
     kernels.insert(std::make_pair(id, kernel));
-
-    if (parent != nullptr) {
-      kernel->parent = parent;
-      return true;
-    }
   }
 
   this->handleForInit(fstmt->getInit(), kernel);
@@ -30,7 +25,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, Kernel* parent) {
         kernel->inputs.erase(input);
     }
   }
-  
+
   this->bodyDeclarations.clear();
 
   return true;
@@ -43,7 +38,7 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall
 
     if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
       if (!ref->getDecl()->isFunctionOrFunctionTemplate())
-        this->inputsBuffer.insert(ref->getDecl());
+        kernel->inputs.insert(ref->getDecl());
     }
 
     if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
@@ -54,25 +49,28 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall
     }
 
     if (firstCall) {
-      if (auto* nestedFor = dyn_cast<ForStmt>(child))
-        VisitForStmt(nestedFor, kernel);
+      if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
+        Kernel* childKernel = new Kernel;
+        childKernel->parent = kernel;
+        kernels.insert(std::make_pair(nestedFor->getID(*this->context), childKernel));
+      }
     }
 
     this->traverseForBody(child, kernel, false);
   }
 }
 
-void LoopInfoVisitor::traverseExpr(Stmt* node) {
+void LoopInfoVisitor::traverseExpr(Stmt* node, Kernel* kernel) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
 
     if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
       if (!ref->getDecl()->isFunctionOrFunctionTemplate())
-        this->inputsBuffer.insert(ref->getDecl());
+        kernel->inputs.insert(ref->getDecl());
     }
 
-    this->traverseExpr(child);
+    this->traverseExpr(child, kernel);
   }
 }
 
@@ -93,7 +91,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, Kernel* kernel) {
         kernel->inputs.insert(initDeclRef);
       // Initialization with RHS as an expression
       else if (auto* initExpr = dyn_cast<Expr>(assign->getRHS()))
-        this->traverseExpr(initExpr);
+        this->traverseExpr(initExpr, kernel);
     }
   }
   // Initialization with a var declaration
@@ -109,7 +107,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, Kernel* kernel) {
         kernel->inputs.insert(varDeclRef);
       // Initialization as an expression
       else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit()))
-        this->traverseExpr(varDeclExpr);
+        this->traverseExpr(varDeclExpr, kernel);
     }
   }
 }
@@ -123,8 +121,8 @@ void LoopInfoVisitor::handleForCond(Expr* cond, Kernel* kernel) {
 
     if (auto* condvarR = dyn_cast<VarDecl>(bo->getRHS()->getReferencedDeclOfCallee()))
       kernel->inputs.insert(condvarR);
-    else if(auto* condvalR = dyn_cast<Expr>(bo->getRHS())) 
-      this->traverseExpr(condvalR);
+    else if (auto* condvalR = dyn_cast<Expr>(bo->getRHS()))
+      this->traverseExpr(condvalR, kernel);
   }
 }
 
@@ -143,19 +141,10 @@ void LoopInfoVisitor::handleForBody(Stmt* body, Kernel* kernel) {
     this->traverseForBody(bodyStmt, kernel);
 }
 
-std::string LoopInfoVisitor::getExprAsString(Expr* expr) {
-  CharSourceRange srcRange = CharSourceRange::getTokenRange(expr->getSourceRange());
-  SourceManager& srcManager = this->context->getSourceManager();
-  const LangOptions& langOpts = this->context->getLangOpts();
-  return Lexer::getSourceText(srcRange, srcManager, langOpts).str();
-}
-
-DenseMap<int64_t, Kernel*> LoopInfoVisitor::getKernels() {
-    return kernels;
-}
+DenseMap<int64_t, Kernel*> LoopInfoVisitor::getKernels() { return kernels; }
 
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
-    visitor.TraverseDecl(Context.getTranslationUnitDecl());
-    TextPrinter p;
-    p.gen_out(visitor.getKernels(), Context);
+  visitor.TraverseDecl(Context.getTranslationUnitDecl());
+  TextPrinter p;
+  p.gen_out(visitor.getKernels(), Context);
 }
