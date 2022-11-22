@@ -49,12 +49,13 @@ public:
   bool VisitForStmt(ForStmt* fstmt, Kernel* parent = nullptr);
   // bool VisitForStmt(ForStmt* fstmt, bool nested = false);
 
+  DenseMap<int64_t, Kernel*> getKernels();
 private:
   ASTContext* context; ///< ASTContext to be used by the visitor.
 
+  DenseMap<int64_t, Kernel*> kernels;
   SmallSet<ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   DenseMap<ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
-  DenseMap<int64_t, Kernel*> kernels;
 
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
@@ -117,10 +118,7 @@ class LoopInfoConsumer : public ASTConsumer {
 public:
   explicit LoopInfoConsumer(ASTContext* Context) : visitor(Context) {}
 
-  virtual void HandleTranslationUnit(ASTContext& Context) {
-    visitor.TraverseDecl(Context.getTranslationUnitDecl());
-  }
-
+  virtual void HandleTranslationUnit(ASTContext& Context);
 private:
   LoopInfoVisitor visitor;
 };
