@@ -4,7 +4,8 @@ include_directories(${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 add_executable(LoopInfoTool main.cpp
-                LoopInfoTool.cpp)
+                LoopInfoTool.cpp
+                Printer.cpp)
 
 target_link_libraries(LoopInfoTool
     clangAST

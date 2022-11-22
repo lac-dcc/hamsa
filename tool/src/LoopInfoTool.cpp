@@ -1,6 +1,7 @@
 #include "LoopInfoTool.hpp"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
+#include "Printer.hpp"
 
 bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, Kernel* parent) {
   Kernel* kernel;
@@ -29,7 +30,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt, Kernel* parent) {
         kernel->inputs.erase(input);
     }
   }
-
+  
   this->bodyDeclarations.clear();
 
   return true;
@@ -147,4 +148,14 @@ std::string LoopInfoVisitor::getExprAsString(Expr* expr) {
   SourceManager& srcManager = this->context->getSourceManager();
   const LangOptions& langOpts = this->context->getLangOpts();
   return Lexer::getSourceText(srcRange, srcManager, langOpts).str();
+}
+
+DenseMap<int64_t, Kernel*> LoopInfoVisitor::getKernels() {
+    return kernels;
+}
+
+void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
+    visitor.TraverseDecl(Context.getTranslationUnitDecl());
+    TextPrinter p;
+    p.gen_out(visitor.getKernels(), Context);
 }
