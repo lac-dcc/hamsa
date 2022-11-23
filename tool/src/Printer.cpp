@@ -6,20 +6,20 @@ std::string Printer::getSourceCodeText(clang::Expr* expr, SourceManager& srcMana
   return Lexer::getSourceText(CharSourceRange::getTokenRange(expr->getSourceRange()), srcManager, langOpts).str();
 }
 
-void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context) {
+void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context, std::string outName) {
   SourceManager& srcManager = Context.getSourceManager();
   const LangOptions& langOpts = Context.getLangOpts();
-  auto srcLocation = (*kernels.begin()).second->init->getExprLoc();
-  auto fileName = srcManager.getFilename(srcLocation);
+  auto fileName = outName;
 
-  for (int i = fileName.size(); i >= 0; i--) {
-    if (fileName[i] == '/')
-      fileName = fileName.substr(i + 1, fileName.size());
+  for (int i = outName.length() - 1; i >= 0; i--) {
+    if (outName[i] == '/') {
+      fileName = outName.substr(i + 1, outName.size() - i);
+      break;
+    }
   }
 
-  std::string outputDir = "output/" + fileName.str() + ".out.txt";
   std::fstream outputFile;
-  outputFile.open(outputDir, std::fstream::out);
+  outputFile.open("output/" + fileName + ".out.txt", std::fstream::out);
 
   for (auto const& [id, kernel] : kernels) {
     outputFile << kernel->induc->getNameAsString() << ", <"

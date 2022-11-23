@@ -121,12 +121,14 @@ private:
  */
 class LoopInfoConsumer : public ASTConsumer {
 public:
-  explicit LoopInfoConsumer(ASTContext* Context) : visitor(Context) {}
+  explicit LoopInfoConsumer(ASTContext* Context, std::string InFile) : visitor(Context) {
+    inputFile = InFile;
+  }
 
   virtual void HandleTranslationUnit(ASTContext& Context);
-
 private:
   LoopInfoVisitor visitor;
+  std::string inputFile;
 };
 
 /**
@@ -137,7 +139,7 @@ private:
 class LoopInfoAction : public ASTFrontendAction {
 public:
   virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& Compiler, StringRef InFile) {
-    return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext());
+    return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), InFile.str());
   }
 };
 

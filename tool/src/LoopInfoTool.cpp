@@ -146,5 +146,5 @@ DenseMap<int64_t, Kernel*> LoopInfoVisitor::getKernels() { return kernels; }
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
   TextPrinter p;
-  p.gen_out(visitor.getKernels(), Context);
+  p.gen_out(visitor.getKernels(), Context, this->inputFile);
 }
