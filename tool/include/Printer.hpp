@@ -4,13 +4,13 @@
 
 class Printer {
 public:
-  virtual void gen_out(DenseMap<int64_t, Kernel*> kernels, ASTContext& Context) = 0;
+  virtual void gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context) = 0;
   std::string getSourceCodeText(clang::Expr* expr, SourceManager& srcManager, LangOptions langOpts);
 };
 
 class TextPrinter : public Printer {
 public:
-  virtual void gen_out(DenseMap<int64_t, Kernel*> kernels, ASTContext& Context);
+  virtual void gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context);
 };
 
 #endif
