@@ -4,7 +4,7 @@
 
 using namespace clang::tooling;
 
-static llvm::cl::OptionCategory MatcherCategory("matcher options");
+static llvm::cl::OptionCategory MatcherCategory("Tool options");
 
 int main(int argc, const char** argv) {
   auto ExpectedParser = CommonOptionsParser::create(argc, argv, MatcherCategory);
