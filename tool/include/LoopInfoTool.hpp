@@ -1,11 +1,21 @@
 #ifndef FOR_INFO_TOOL
 #define FOR_INFO_TOOL
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Lex/Pragma.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/Support/raw_ostream.h"
+
+
+
 
 using namespace clang;
 using namespace llvm;
@@ -121,11 +131,10 @@ private:
  */
 class LoopInfoConsumer : public ASTConsumer {
 public:
-  explicit LoopInfoConsumer(ASTContext* Context, std::string InFile) : visitor(Context) {
-    inputFile = InFile;
-  }
+  explicit LoopInfoConsumer(ASTContext* Context, std::string InFile) : visitor(Context), inputFile(InFile){}
 
   virtual void HandleTranslationUnit(ASTContext& Context);
+
 private:
   LoopInfoVisitor visitor;
   std::string inputFile;
@@ -136,11 +145,22 @@ private:
  *
  * \brief Class used to define AST consumer-based frontend actions.
  */
-class LoopInfoAction : public ASTFrontendAction {
-public:
-  virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& Compiler, StringRef InFile) {
-    return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), InFile.str());
-  }
+class LoopInfoAction : public PluginASTAction {
+  protected:
+    virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& Compiler, StringRef InFile) override {
+      return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), InFile.str());
+    }
+
+    bool ParseArgs(const clang::CompilerInstance &Compiler, 
+                 const std::vector<std::string> &args) override {
+    return true;
+   }
+  
+  private:
+    std::set<std::string> ParsedTemplates;
 };
+
+static FrontendPluginRegistry::Add<LoopInfoAction>
+X("hamsa", "get loop info");
 
 #endif

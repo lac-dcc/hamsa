@@ -3,21 +3,7 @@ find_package(Clang REQUIRED)
 include_directories(${LLVM_INCLUDE_DIRS} ${CLANG_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_executable(LoopInfoTool main.cpp
-                LoopInfoTool.cpp
-                Printer.cpp)
+add_library(LoopInfoTool SHARED LoopInfoTool.cpp)
 
-target_link_libraries(LoopInfoTool
-    clangAST
-    clangASTMatchers
-    clangBasic
-    clangDriver
-    clangFrontend
-    clangLex
-    clangRewriteFrontend
-    clangSerialization
-    clangStaticAnalyzerFrontend
-    clangTooling
-    clangToolingSyntax
-    LLVMSupport
-)
+set_target_properties(LoopInfoTool PROPERTIES
+    LINKER_LANGUAGE CXX COMPILE_FLAGS "-fno-rtti")
