@@ -13,12 +13,12 @@ For linear loop bounds, inferring the complexity is trivial. However, for non-li
 
 First of all, you need to inform the directory where LLVM is built. You can do this by changing the value of `LLVM_BUILD_DIR` at `tool/setup.sh`. 
 
-After configuring the build dir, you setup the tool by running this command:
+After configuring the build dir, you can setup the tool by running this command:
 
     ./setup.sh
 
 ## Running
 
-You can use the script `run.sh`. Here's an example on how to use it:
+After you've built the tool, you can run it as a Clang plugin:
 
-    ./run test/samples/sample1.cpp
+    clang++ -cc1 -load ./build/src/libLoopInfoTool.so -plugin hamsa inputFile.cpp
