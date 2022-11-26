@@ -1,7 +1,5 @@
 #include "LoopInfoTool.hpp"
-#include "Printer.hpp"
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Lex/Lexer.h"
+#include "Printer.hpp"\
 
 bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   Kernel* kernel;
@@ -145,6 +143,44 @@ DenseMap<int64_t, Kernel*> LoopInfoVisitor::getKernels() { return kernels; }
 
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
-  TextPrinter p;
-  p.gen_out(visitor.getKernels(), Context, this->inputFile);
+
+  if (this->outputFormat == "txt") {
+    TextPrinter printer;
+    printer.gen_out(visitor.getKernels(), Context, this->outputFile);
+  }
+}
+
+bool LoopInfoAction::ParseArgs(const CompilerInstance& Compiler, const std::vector<std::string>& args) {
+  for (size_t i = 0, end = args.size(); i < end; ++i) {
+    DiagnosticsEngine& diagnostics = Compiler.getDiagnostics();
+    if (args[i] == "-output-format") {
+      if (i + 1 >= end) {
+        diagnostics.Report(diagnostics.getCustomDiagID(DiagnosticsEngine::Error, "Missing -output argument"));
+        return false;
+      }
+
+      ++i;
+      this->outputFormat = args[i];
+    } else if (args[i] == "-output-file") {
+      if (i + 1 >= end) {
+        diagnostics.Report(diagnostics.getCustomDiagID(DiagnosticsEngine::Error, "Missing -output-file argument"));
+        return false;
+      }
+
+      ++i;
+      this->outputFile = args[i];
+    } else if (args[i] == "help") {
+      errs() << "Hamsa plugin\n";
+      errs() << "Arguments:\n";
+      errs() << "-output       output format\n";
+      errs() << "-output-file  output file name\n";
+    } else {
+      unsigned DiagID = diagnostics.getCustomDiagID(DiagnosticsEngine::Error, "Invalid argument '%0'");
+      diagnostics.Report(DiagID) << args[i];
+      
+      return false;
+    }
+  }
+
+  return true;
 }

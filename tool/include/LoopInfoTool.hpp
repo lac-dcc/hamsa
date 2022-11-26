@@ -123,13 +123,15 @@ private:
  */
 class LoopInfoConsumer : public ASTConsumer {
 public:
-  explicit LoopInfoConsumer(ASTContext* Context, std::string InFile) : visitor(Context), inputFile(InFile) {}
+  explicit LoopInfoConsumer(ASTContext* Context, std::string outputFile, std::string format)
+      : visitor(Context), outputFile(outputFile), outputFormat(format) {}
 
   virtual void HandleTranslationUnit(ASTContext& Context);
 
 private:
   LoopInfoVisitor visitor;
-  std::string inputFile;
+  std::string outputFile;
+  std::string outputFormat;
 };
 
 /**
@@ -140,12 +142,14 @@ private:
 class LoopInfoAction : public PluginASTAction {
 protected:
   virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& Compiler, StringRef InFile) override {
-    return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), InFile.str());
+    return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), outputFile, outputFormat);
   }
 
-  bool ParseArgs(const clang::CompilerInstance& Compiler, const std::vector<std::string>& args) override {
-    return true;
-  }
+  bool ParseArgs(const CompilerInstance& Compiler, const std::vector<std::string>& args) override;
+
+private:
+  std::string outputFormat = "txt";
+  std::string outputFile = "output.txt";
 };
 
 static FrontendPluginRegistry::Add<LoopInfoAction> X("hamsa", "get loop info");
