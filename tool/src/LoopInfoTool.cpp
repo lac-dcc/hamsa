@@ -169,11 +169,11 @@ bool LoopInfoAction::ParseArgs(const CompilerInstance& Compiler, const std::vect
 
       ++i;
       this->outputFile = args[i];
-    } else if (args[i] == "help") {
-      errs() << "Hamsa plugin\n";
+    } else if (args[i] == "-help") {
+      errs() << "--- Hamsa plugin ---\n";
       errs() << "Arguments:\n";
-      errs() << "-output       output format\n";
-      errs() << "-output-file  output file name\n";
+      errs() << " -output-format   format\n";
+      errs() << " -output-file     fileName\n";
     } else {
       unsigned DiagID = diagnostics.getCustomDiagID(DiagnosticsEngine::Error, "Invalid argument '%0'");
       diagnostics.Report(DiagID) << args[i];
