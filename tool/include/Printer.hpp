@@ -1,19 +1,25 @@
 #ifndef PRINTER
 #define PRINTER
 
-#include "LoopInfoTool.hpp"
-
-using namespace clang;
+#include "Complexity.hpp"
+#include "Kernel.hpp"
+#include "clang/AST/ASTContext.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/DenseMap.h"
+#include <string>
 
 class Printer {
-  public:
-    virtual void gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context, std::string outName) = 0;
-    std::string getSourceCodeText(Expr *expr, SourceManager& srcManager, LangOptions langOpts);
+public:
+  virtual void gen_out(const llvm::DenseMap<int64_t, Kernel*>& kernels, clang::ASTContext& Context,
+                       std::string outName) = 0;
+  std::string getSourceCodeText(clang::Expr* expr, clang::SourceManager& srcManager, clang::LangOptions langOpts);
 };
 
 class TextPrinter : public Printer {
-  public:
-    virtual void gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context, std::string outName);
+public:
+  virtual void gen_out(const llvm::DenseMap<int64_t, Kernel*>& kernels, clang::ASTContext& Context,
+                       std::string outName);
 };
 
 #endif

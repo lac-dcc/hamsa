@@ -3,6 +3,9 @@
 #include "clang/Lex/Lexer.h"
 #include <fstream>
 
+using namespace llvm;
+using namespace clang;
+
 std::string Printer::getSourceCodeText(Expr* expr, SourceManager& srcManager, LangOptions langOpts) {
   return Lexer::getSourceText(CharSourceRange::getTokenRange(expr->getSourceRange()), srcManager, langOpts).str();
 }
