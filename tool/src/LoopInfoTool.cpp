@@ -1,5 +1,9 @@
+#include "Complexity.hpp"
 #include "LoopInfoTool.hpp"
-#include "Printer.hpp"\
+#include "Printer.hpp"
+
+using namespace clang;
+using namespace llvm;
 
 bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   Kernel* kernel;
@@ -145,6 +149,7 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
 
   if (this->outputFormat == "txt") {
+    inferComplexity(visitor.getKernels());
     TextPrinter printer;
     printer.gen_out(visitor.getKernels(), Context, this->outputFile);
   }
@@ -177,7 +182,7 @@ bool LoopInfoAction::ParseArgs(const CompilerInstance& Compiler, const std::vect
     } else {
       unsigned DiagID = diagnostics.getCustomDiagID(DiagnosticsEngine::Error, "Invalid argument '%0'");
       diagnostics.Report(DiagID) << args[i];
-      
+
       return false;
     }
   }

@@ -1,6 +1,7 @@
 #ifndef FOR_INFO_TOOL
 #define FOR_INFO_TOOL
 
+#include "Kernel.hpp"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -8,24 +9,6 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-
-using namespace clang;
-using namespace llvm;
-
-/**
- * \struct Kernel
- *
- * \brief Data structure used to represent a kernel. It contains any information
- * that might be useful to infer the kernel's complexity.
- */
-struct Kernel {
-  VarDecl* induc;                 ///< Induction variable.
-  Expr* init;                     ///< Induction variable's initial value.
-  Expr* limit;                    ///< Induction variable's limit.
-  Expr* inc;                      ///< Induction variable's increment at each iteration.
-  SmallSet<ValueDecl*, 8> inputs; ///< Set of inputs of the kernel.
-  Kernel* parent = nullptr;       ///< Parent kernel (if there is any).
-};
 
 /**
  * \class LoopInfoVisitor
@@ -36,13 +19,13 @@ struct Kernel {
  * The main goal is to extract information from loops, such as their induction variables,
  * bounds and inputs.
  */
-class LoopInfoVisitor : public RecursiveASTVisitor<LoopInfoVisitor> {
+class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
   /**
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
    */
-  explicit LoopInfoVisitor(ASTContext* context) : context(context) {}
+  explicit LoopInfoVisitor(clang::ASTContext* context) : context(context) {}
 
   /**
    * \brief Destructor method.
@@ -56,20 +39,21 @@ public:
    * \brief Visit method to be applied to ForStmt nodes.
    * \param fstmt ForStmt node being currently visited.
    */
-  bool VisitForStmt(ForStmt* fstmt);
+  bool VisitForStmt(clang::ForStmt* fstmt);
 
   /**
    * \brief Getter for the kernels attribute.
    * \return Hash table of kernels.
    */
-  DenseMap<int64_t, Kernel*> getKernels();
+  llvm::DenseMap<int64_t, Kernel*> getKernels();
 
 private:
-  ASTContext* context; ///< ASTContext to be used by the visitor.
+  clang::ASTContext* context; ///< ASTContext to be used by the visitor.
 
-  DenseMap<int64_t, Kernel*> kernels;   ///< Hash table of kernels identified during the Visitor's execution.
-  SmallSet<ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
-  DenseMap<ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
+  llvm::DenseMap<int64_t, Kernel*> kernels; ///< Hash table of kernels identified during the Visitor's execution.
+  llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
+  llvm::DenseMap<clang::ValueDecl*, std::string>
+      bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
 
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
@@ -78,42 +62,42 @@ private:
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    * \param firstCall Flag to distinguish recursive calls from normal ones.
    */
-  void traverseForBody(Stmt* node, Kernel* kernel, bool firstCall = true);
+  void traverseForBody(clang::Stmt* node, Kernel* kernel, bool firstCall = true);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.
    * \param node Root of the subtree.
    * \param kernel Kernel being visited.
    */
-  void traverseExpr(Stmt* node, Kernel* kernel);
+  void traverseExpr(clang::Stmt* node, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the initialization statement of a for loop.
    * \param init Initialization statement.
    * \param kernel Kernel being visited.
    */
-  void handleForInit(Stmt* init, Kernel* kernel);
+  void handleForInit(clang::Stmt* init, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the condition expression.
    * \param cond Condition expression.
    * \param kernel Kernel being visited.
    */
-  void handleForCond(Expr* cond, Kernel* kernel);
+  void handleForCond(clang::Expr* cond, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the increment expression.
    * \param inc Increment expression.
    * \param kernel Kernel being visited.
    */
-  void handleForInc(Expr* inc, Kernel* kernel);
+  void handleForInc(clang::Expr* inc, Kernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the body of the for loop.
    * \param body Statement that represents the for's body.
    * \param kernel Kernel being visited.
    */
-  void handleForBody(Stmt* body, Kernel* kernel);
+  void handleForBody(clang::Stmt* body, Kernel* kernel);
 };
 
 /**
@@ -121,12 +105,12 @@ private:
  *
  * \brief Class used to write generic actions on the AST.
  */
-class LoopInfoConsumer : public ASTConsumer {
+class LoopInfoConsumer : public clang::ASTConsumer {
 public:
-  explicit LoopInfoConsumer(ASTContext* Context, std::string outputFile, std::string format)
+  explicit LoopInfoConsumer(clang::ASTContext* Context, std::string outputFile, std::string format)
       : visitor(Context), outputFile(outputFile), outputFormat(format) {}
 
-  virtual void HandleTranslationUnit(ASTContext& Context);
+  virtual void HandleTranslationUnit(clang::ASTContext& Context);
 
 private:
   LoopInfoVisitor visitor;
@@ -139,19 +123,20 @@ private:
  *
  * \brief Class used to define a Clang plugin action.
  */
-class LoopInfoAction : public PluginASTAction {
+class LoopInfoAction : public clang::PluginASTAction {
 protected:
-  virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& Compiler, StringRef InFile) override {
+  virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& Compiler,
+                                                                llvm::StringRef InFile) override {
     return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), outputFile, outputFormat);
   }
 
-  bool ParseArgs(const CompilerInstance& Compiler, const std::vector<std::string>& args) override;
+  bool ParseArgs(const clang::CompilerInstance& Compiler, const std::vector<std::string>& args) override;
 
 private:
   std::string outputFormat = "txt";
   std::string outputFile = "output.txt";
 };
 
-static FrontendPluginRegistry::Add<LoopInfoAction> X("hamsa", "get loop info");
+static clang::FrontendPluginRegistry::Add<LoopInfoAction> X("hamsa", "get loop info");
 
 #endif
