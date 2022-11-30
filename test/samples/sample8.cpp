@@ -1,6 +1,9 @@
+#include <iostream>
 int main() {
-    for(int i = 0; i < 10; i++) {
-        for(int j = 10; j <= 0; j--) {
+    int n, m;
+    std::cin >> n >> m;
+    for(int i = 0; i < n; i++) {
+        for(int j = m; j <= 0; j--) {
             
         }
     }

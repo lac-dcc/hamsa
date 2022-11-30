@@ -149,7 +149,7 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
 
   if (this->outputFormat == "txt") {
-    inferComplexity(visitor.getKernels());
+    inferComplexity(visitor.getKernels(), Context);
     TextPrinter printer;
     printer.gen_out(visitor.getKernels(), Context, this->outputFile);
   }
