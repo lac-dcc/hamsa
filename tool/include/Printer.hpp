@@ -13,7 +13,7 @@ class Printer {
 public:
   virtual void gen_out(const llvm::DenseMap<int64_t, Kernel*>& kernels, clang::ASTContext& Context,
                        std::string outName) = 0;
-  std::string getSourceCodeText(clang::Expr* expr, clang::SourceManager& srcManager, clang::LangOptions langOpts);
+  static std::string getSourceCodeText(clang::Expr* expr, clang::ASTContext& Context);
 };
 
 class TextPrinter : public Printer {
