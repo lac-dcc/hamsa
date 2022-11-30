@@ -122,6 +122,7 @@ private:
  * \class LoopInfoAction
  *
  * \brief Class used to define a Clang plugin action.
+ * To know more about plugins: https://youtu.be/SnP-8QM-TlI
  */
 class LoopInfoAction : public clang::PluginASTAction {
 protected:
