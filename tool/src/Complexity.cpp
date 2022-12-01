@@ -6,10 +6,6 @@
 using namespace llvm;
 using namespace clang;
 
-/*
- Cost = (|limit - init + 1|) / | inc |
-*/
-
 std::string calculateSingleCost(Kernel* kernel, ASTContext& Context) {
   std::string tempInit = Printer::getSourceCodeText(kernel->init, Context);
   std::string tempLimit = Printer::getSourceCodeText(kernel->limit, Context);
@@ -37,8 +33,6 @@ void inferComplexity(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Cont
         tempCost = tempCost + "*" + calculateSingleCost(auxKernel, Context);
         auxKernel = auxKernel->parent;
       }
-
-      // outs() << id << ": " << kernel->induc->getNameAsString() << " - Cost: " << tempCost <<"\n";
       kernel->complexity = "O("+tempCost+")";
     }
 }
