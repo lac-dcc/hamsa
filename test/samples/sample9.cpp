@@ -1,9 +1,13 @@
 void loop(int m, int n) {
-    for(int i = n; i < m; i++) {
-        int a = 1 + 2;
-        for(int j = n * m; j >= 0; j--) {
-            int b = 1 + a;
-        }   
+    int a = (m + n)/2;
+
+    for(int i = 0; i < m; i += 4 * n) {
+        int b = 0;
+        int j;
+        for(j = n * m; j >= 0; j -= 4 * n) {
+            int c = a * 100;
+            b += c * (j + i);
+        }
     }
 }
 
