@@ -13,8 +13,8 @@ else
 
     mkdir -p output
 
-    clang++ -cc1 -load $LIB -plugin hamsa \
-    -plugin-arg-hamsa -output-format -plugin-arg-hamsa $FORMAT \
-    -plugin-arg-hamsa -output-file -plugin-arg-hamsa $OUTPUT \
+    clang++ -fsyntax-only -Xclang -load -Xclang $LIB -Xclang -plugin -Xclang hamsa \
+    -Xclang -plugin-arg-hamsa -Xclang -output-format -Xclang -plugin-arg-hamsa -Xclang $FORMAT \
+    -Xclang -plugin-arg-hamsa  -Xclang -output-file -Xclang -plugin-arg-hamsa -Xclang $OUTPUT \
     $INPUT
 fi
