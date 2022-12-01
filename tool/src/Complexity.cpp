@@ -39,6 +39,6 @@ void inferComplexity(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Cont
       }
 
       // outs() << id << ": " << kernel->induc->getNameAsString() << " - Cost: " << tempCost <<"\n";
-      kernel->complexity = tempCost;
+      kernel->complexity = "O("+tempCost+")";
     }
 }
