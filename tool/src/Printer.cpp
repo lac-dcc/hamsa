@@ -13,13 +13,13 @@ std::string Printer::getSourceCodeText(Expr* expr, ASTContext& Context) {
 }
 
 void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context, std::string outName) {
-
-
   std::fstream outputFile;
+  SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);
 
   for (auto const& [id, kernel] : kernels) {
-    outputFile << kernel->induc->getNameAsString() << ", <"
+    outputFile << "at line " << srcManager.getSpellingLineNumber(kernel->begin) << ", "
+               << kernel->induc->getNameAsString() << ", <"
                << Printer::getSourceCodeText(kernel->init, Context) << ", "
                << Printer::getSourceCodeText(kernel->limit, Context) << ", "
                << Printer::getSourceCodeText(kernel->inc, Context) << "> [";
@@ -28,6 +28,7 @@ void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext&
     for (auto* input : kernel->inputs) {
       outputFile << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
     }
-    outputFile << "], " << kernel->complexity << '\n';
+
+    outputFile << "], " << kernel->complexity  << '\n';
   }
 }
