@@ -19,6 +19,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   this->handleForCond(fstmt->getCond(), kernel);
   this->handleForInc(fstmt->getInc(), kernel);
   this->handleForBody(fstmt->getBody(), kernel);
+  kernel->begin = fstmt->getSourceRange().getBegin();
 
   // Removing VarDecl from inputs
   if (!this->bodyDeclarations.empty()) {
