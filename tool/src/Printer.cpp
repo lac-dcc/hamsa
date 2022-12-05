@@ -18,7 +18,7 @@ void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext&
   outputFile.open("output/" + outName, std::fstream::out);
 
   for (auto const& [id, kernel] : kernels) {
-    outputFile << "at line " << srcManager.getSpellingLineNumber(kernel->begin) << ", "
+    outputFile << "at line " << srcManager.getSpellingLineNumber(kernel->begin) << ": "
                << kernel->induc->getNameAsString() << ", <"
                << Printer::getSourceCodeText(kernel->init, Context) << ", "
                << Printer::getSourceCodeText(kernel->limit, Context) << ", "
