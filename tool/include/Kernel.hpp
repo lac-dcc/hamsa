@@ -22,6 +22,7 @@ struct Kernel {
   clang::SourceLocation begin;                 ///< Location of the beginning of the kernel.
   std::string complexity = "";                 ///< Kernel asymptotic complexity.
   Kernel* parent = nullptr;                    ///< Parent kernel (if there is any).
+  llvm::SmallSet<Kernel*, 3> children;         ///< Set of child kernels (if there are any).
 };
 
 #endif

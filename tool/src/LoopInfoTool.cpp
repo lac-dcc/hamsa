@@ -55,6 +55,7 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall
       if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
         Kernel* childKernel = new Kernel;
         childKernel->parent = kernel;
+        kernel->children.insert(childKernel);
         kernels.insert(std::make_pair(nestedFor->getID(*this->context), childKernel));
       }
     }
