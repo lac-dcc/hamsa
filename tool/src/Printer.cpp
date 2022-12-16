@@ -32,3 +32,10 @@ void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext&
     outputFile << "], " << kernel->complexity  << '\n';
   }
 }
+
+void DOTPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context, std::string outName) {
+  std::fstream outputFile;
+  SourceManager& srcManager = Context.getSourceManager();
+  outputFile.open("output/" + outName, std::fstream::out);
+
+}
