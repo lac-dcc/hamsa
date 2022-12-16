@@ -12,6 +12,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
     kernel = kernels[id];
   else {
     kernel = new Kernel;
+    kernel->id = id;
     kernels.insert(std::make_pair(id, kernel));
   }
 
@@ -54,9 +55,11 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall
     if (firstCall) {
       if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
         Kernel* childKernel = new Kernel;
+        int64_t child_ID = nestedFor->getID(*this->context);
+        childKernel->id = child_ID;
         childKernel->parent = kernel;
         kernel->children.insert(childKernel);
-        kernels.insert(std::make_pair(nestedFor->getID(*this->context), childKernel));
+        kernels.insert(std::make_pair(child_ID, childKernel));
       }
     }
 
@@ -153,6 +156,10 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   if (this->outputFormat == "txt") {
     inferComplexity(visitor.getKernels(), Context);
     TextPrinter printer;
+    printer.gen_out(visitor.getKernels(), Context, this->outputFile);
+  } 
+  else if(this->outputFormat == "DOT") {
+    DOTPrinter printer;
     printer.gen_out(visitor.getKernels(), Context, this->outputFile);
   }
 }
