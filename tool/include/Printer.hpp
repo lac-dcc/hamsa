@@ -22,4 +22,9 @@ public:
                        std::string outName);
 };
 
+class DOTPrinter : public Printer {
+public:
+  virtual void gen_out(const llvm::DenseMap<int64_t, Kernel*>& kernels, clang::ASTContext& Context,
+                       std::string outName);
+};
 #endif
