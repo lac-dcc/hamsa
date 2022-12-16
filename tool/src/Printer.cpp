@@ -37,5 +37,20 @@ void DOTPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& 
   std::fstream outputFile;
   SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);
+  
+  std::string links = "";
+  std::string nodes = "";
 
+  for (auto const& [id, kernel] : kernels) {
+    nodes += std::to_string(kernel->id) + "[label=\""
+               + kernel->induc->getNameAsString() + ", <"
+               + Printer::getSourceCodeText(kernel->init, Context) + ", "
+               + Printer::getSourceCodeText(kernel->limit, Context) + ", "
+               + Printer::getSourceCodeText(kernel->inc, Context) + ">\"]\n";
+
+    for(auto child : kernel->children) {
+      links += std::to_string(kernel->id) + " -> " + std::to_string(child->id) + "\n";
+    }
+  }
+  outputFile << "digraph {\n" << nodes << '\n' << links << "}";
 }
