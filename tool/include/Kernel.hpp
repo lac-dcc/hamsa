@@ -14,6 +14,7 @@
  * that might be useful to infer the kernel's complexity.
  */
 struct Kernel {
+  int64_t id;                                  ///< Kernel id.
   clang::VarDecl* induc;                       ///< Induction variable.
   clang::Expr* init;                           ///< Induction variable's initial value.
   clang::Expr* limit;                          ///< Induction variable's limit.
