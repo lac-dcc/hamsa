@@ -42,7 +42,10 @@ void DOTPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& 
   std::string nodes = "";
 
   for (auto const& [id, kernel] : kernels) {
-    nodes += std::to_string(kernel->id) + "[label=\""
+    nodes += std::to_string(kernel->id) + "[";
+    if (kernel->parent == nullptr)
+      nodes += "shape=diamond,";
+    nodes += "label=\""
                + kernel->induc->getNameAsString() + ", <"
                + Printer::getSourceCodeText(kernel->init, Context) + ", "
                + Printer::getSourceCodeText(kernel->limit, Context) + ", "
