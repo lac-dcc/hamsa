@@ -1,6 +1,6 @@
 #include "Complexity.hpp"
-#include "llvm/Support/raw_ostream.h"
 #include "Printer.hpp"
+#include "llvm/Support/raw_ostream.h"
 #include <locale>
 
 using namespace llvm;
@@ -21,18 +21,27 @@ std::string calculateSingleCost(Kernel* kernel, ASTContext& Context) {
   else if (!isdigit(tempInit[0]) && isdigit(tempLimit[0]) && (isdigit(tempInc[0]) || isdigit(tempInc[1])))
     return tempInit;
   else
-    return "x";
+    return "unknown";
+}
+
+void inferComplexityAux(Kernel* kernel, ASTContext& Context) {
+  if(!kernel->children.empty()) {
+    std::string costAux = calculateSingleCost(kernel, Context) + "*(";
+    for (Kernel* child : kernel->children) {
+      inferComplexityAux(child, Context);
+      costAux += child->complexity + "+";
+    }
+    costAux.pop_back();
+    costAux += ")";
+    kernel->complexity = costAux;
+  } else {
+    kernel->complexity = calculateSingleCost(kernel, Context);
+  }
 }
 
 void inferComplexity(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context) {
-    for(auto& [id, kernel] : kernels) {
-      auto tempCost = calculateSingleCost(kernel, Context);
-      auto auxKernel = kernel->parent;
-
-      while(auxKernel != nullptr) {
-        tempCost = tempCost + "*" + calculateSingleCost(auxKernel, Context);
-        auxKernel = auxKernel->parent;
-      }
-      kernel->complexity = "O("+tempCost+")";
-    }
+  for (auto& [id, kernel] : kernels) {
+    if (kernel->parent == nullptr)
+      inferComplexityAux(kernel, Context);
+  }
 }
