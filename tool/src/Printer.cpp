@@ -29,7 +29,7 @@ void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext&
       outputFile << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
     }
 
-    outputFile << "], " << kernel->complexity  << '\n';
+    outputFile << "], O(" << kernel->complexity  << ")\n";
   }
 }
 
