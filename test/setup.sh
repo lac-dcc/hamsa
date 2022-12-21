@@ -1,1 +1,0 @@
-c++ src/LoopInfoTool.test.cpp -o bin/runTests
