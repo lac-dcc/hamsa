@@ -12,6 +12,15 @@ std::string Printer::getSourceCodeText(Expr* expr, ASTContext& Context) {
   return Lexer::getSourceText(CharSourceRange::getTokenRange(expr->getSourceRange()), srcManager, langOpts).str();
 }
 
+std::string getIncRepresentation(clang::Expr *inc, ASTContext& Context) {
+  if(auto uOp = dyn_cast<UnaryOperator>(inc)) {
+      if(uOp->isIncrementOp())
+        return "1";
+      if(uOp-> isDecrementOp())
+        return "-1";
+    } 
+    return Printer::getSourceCodeText(inc, Context);
+}
 void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& Context, std::string outName) {
   std::fstream outputFile;
   SourceManager& srcManager = Context.getSourceManager();
@@ -22,8 +31,8 @@ void TextPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext&
                << kernel->induc->getNameAsString() << ", <"
                << Printer::getSourceCodeText(kernel->init, Context) << ", "
                << Printer::getSourceCodeText(kernel->limit, Context) << ", "
-               << Printer::getSourceCodeText(kernel->inc, Context) << "> [";
-
+               << getIncRepresentation(kernel->inc, Context) << "> [";
+            
     bool isFirst = true;
     for (auto* input : kernel->inputs) {
       outputFile << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
@@ -49,7 +58,7 @@ void DOTPrinter::gen_out(const DenseMap<int64_t, Kernel*>& kernels, ASTContext& 
                + kernel->induc->getNameAsString() + ", <"
                + Printer::getSourceCodeText(kernel->init, Context) + ", "
                + Printer::getSourceCodeText(kernel->limit, Context) + ", "
-               + Printer::getSourceCodeText(kernel->inc, Context) + ">\"]\n";
+               + getIncRepresentation(kernel->inc, Context)+ ">\"]\n";
 
     for(auto child : kernel->children) {
       links += std::to_string(kernel->id) + " -> " + std::to_string(child->id) + "\n";
