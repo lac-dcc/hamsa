@@ -13,7 +13,7 @@ else
 
     mkdir -p output
 
-    clang++ -fsyntax-only -Xclang -load -Xclang $LIB -Xclang -plugin -Xclang hamsa \
+    clang++ -stdlib=libc++ -fsyntax-only -Xclang -load -Xclang $LIB -Xclang -plugin -Xclang hamsa \
     -Xclang -plugin-arg-hamsa -Xclang -output-format -Xclang -plugin-arg-hamsa -Xclang $FORMAT \
     -Xclang -plugin-arg-hamsa  -Xclang -output-file -Xclang -plugin-arg-hamsa -Xclang $OUTPUT \
     $INPUT
