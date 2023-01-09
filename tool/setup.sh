@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =========================================================================== #
-LLVM_BUILD_DIR="$HOME/LaC/llvm-project/build"
+LLVM_BUILD_DIR="$HOME/llvm-project/build"
 
 mkdir -p build
 BUILD_DIR=$(realpath -L ./build)
