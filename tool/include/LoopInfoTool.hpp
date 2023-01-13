@@ -21,6 +21,9 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
+  SeqKernel root;
+  clang::ASTContext* context; ///< ASTContext to be used by the visitor.
+
   /**
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
@@ -31,7 +34,7 @@ public:
    * \brief Destructor method.
    */
   ~LoopInfoVisitor() {
-    for (auto it = kernels.begin(), end = kernels.end(); it != end; ++it)
+    for (auto it = this->loopKernels.begin(), end = this->loopKernels.end(); it != end; ++it)
       delete it->second;
   }
 
@@ -45,13 +48,11 @@ public:
    * \brief Getter for the kernels attribute.
    * \return Hash table of kernels.
    */
-  llvm::DenseMap<int64_t, Kernel*> getKernels();
+  llvm::DenseMap<int64_t, LoopKernel*> getKernels();
 
 private:
-  clang::ASTContext* context; ///< ASTContext to be used by the visitor.
-
-  SeqKernel root;
-  llvm::DenseMap<int64_t, Kernel*> kernels; ///< Hash table of kernels identified during the Visitor's execution.
+  llvm::DenseMap<int64_t, LoopKernel*>
+      loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   llvm::DenseMap<clang::ValueDecl*, std::string>
       bodyDeclarations; ///< Hash table of variables declared inside the loop's body.

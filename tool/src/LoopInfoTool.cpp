@@ -1,20 +1,20 @@
-#include "Complexity.hpp"
 #include "LoopInfoTool.hpp"
+#include "Complexity.hpp"
 #include "Printer.hpp"
 
 using namespace clang;
 using namespace llvm;
 
 bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
-  Kernel* kernel;
+  LoopKernel* kernel;
   int64_t id = fstmt->getID(*this->context);
-  if (kernels.find(id) != kernels.end())
-    kernel = kernels[id];
+  if (this->loopKernels.find(id) != this->loopKernels.end())
+    kernel = this->loopKernels[id];
   else {
     kernel = new LoopKernel;
     root.children.insert(kernel);
     kernel->id = id;
-    kernels.insert(std::make_pair(id, kernel));
+    this->loopKernels.insert(std::make_pair(id, kernel));
   }
 
   this->handleForInit(fstmt->getInit(), kernel);
@@ -55,11 +55,11 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool first
 
     if (firstCall) {
       if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
-        Kernel* childKernel = new LoopKernel;
+        LoopKernel* childKernel = new LoopKernel;
         childKernel->id = nestedFor->getID(*this->context);
         childKernel->parent = kernel;
         kernel->child.children.insert(childKernel);
-        kernels.insert(std::make_pair(childKernel->id, childKernel));
+        this->loopKernels.insert(std::make_pair(childKernel->id, childKernel));
       }
     }
 
@@ -148,17 +148,16 @@ void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
     this->traverseForBody(bodyStmt, kernel);
 }
 
-DenseMap<int64_t, Kernel*> LoopInfoVisitor::getKernels() { return kernels; }
+DenseMap<int64_t, LoopKernel*> LoopInfoVisitor::getKernels() { return this->loopKernels; }
 
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
 
   if (this->outputFormat == "txt" || this->outputFormat == "TXT") {
-    inferComplexity(visitor.getKernels(), Context);
+    visitor.root.eval(Context);
     TextPrinter printer;
     printer.gen_out(visitor.getKernels(), Context, this->outputFile);
-  } 
-  else if(this->outputFormat == "dot" || this->outputFormat == "DOT") {
+  } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
     DOTPrinter printer;
     printer.gen_out(visitor.getKernels(), Context, this->outputFile);
   }

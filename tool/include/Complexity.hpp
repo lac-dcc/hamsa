@@ -9,6 +9,6 @@
  * \brief Infer the complexity of each Kernel in a map of Kernels.
  * \param kernels Hash map of Kernels.
  */
-void inferComplexity(const llvm::DenseMap<int64_t, Kernel*>& kernels, clang::ASTContext& Context);
+void inferComplexity(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, clang::ASTContext& Context);
 
 #endif

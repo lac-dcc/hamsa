@@ -19,8 +19,17 @@ public:
   llvm::SmallSet<clang::ValueDecl*, 8> inputs; ///< Set of inputs of the kernel.
   clang::SourceLocation begin;                 ///< Location of the beginning of the kernel.
   Kernel* parent = nullptr;                    ///< Parent kernel (if there is any).
+  std::string complexity;                      ///< Kernel asymptotic complexity.
 
-  virtual std::string eval() = 0; ///< Kernel asymptotic complexity.
+  virtual std::string eval(clang::ASTContext& context) = 0; ///< Kernel asymptotic complexity.
+  virtual ~Kernel() = default;
+};
+
+class SeqKernel : public Kernel {
+public:
+  llvm::SmallSet<Kernel*, 3> children;
+
+  virtual std::string eval(clang::ASTContext& context);
 };
 
 class LoopKernel : public Kernel {
@@ -31,14 +40,7 @@ public:
   clang::Expr* limit;    ///< Induction variable's limit.
   clang::Expr* inc;      ///< Induction variable's increment at each iteration.
 
-  virtual std::string eval();
-};
-
-class SeqKernel : public Kernel {
-public:
-  llvm::SmallSet<Kernel*, 3> children;
-
-  virtual std::string eval();
+  virtual std::string eval(clang::ASTContext& context);
 };
 
 class CondKernel : public Kernel {
@@ -46,7 +48,7 @@ public:
   SeqKernel leftChild;
   SeqKernel rightChild;
 
-  virtual std::string eval();
+  virtual std::string eval(clang::ASTContext& context);
 };
 
 #endif
