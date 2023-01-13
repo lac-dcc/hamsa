@@ -11,7 +11,8 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   if (kernels.find(id) != kernels.end())
     kernel = kernels[id];
   else {
-    kernel = new Kernel;
+    kernel = new LoopKernel;
+    root.children.insert(kernel);
     kernel->id = id;
     kernels.insert(std::make_pair(id, kernel));
   }
@@ -35,7 +36,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   return true;
 }
 
-void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall) {
+void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool firstCall) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -54,10 +55,10 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall
 
     if (firstCall) {
       if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
-        Kernel* childKernel = new Kernel;
+        Kernel* childKernel = new LoopKernel;
         childKernel->id = nestedFor->getID(*this->context);
         childKernel->parent = kernel;
-        kernel->children.insert(childKernel);
+        kernel->child.children.insert(childKernel);
         kernels.insert(std::make_pair(childKernel->id, childKernel));
       }
     }
@@ -66,7 +67,7 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, Kernel* kernel, bool firstCall
   }
 }
 
-void LoopInfoVisitor::traverseExpr(Stmt* node, Kernel* kernel) {
+void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -80,7 +81,7 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, Kernel* kernel) {
   }
 }
 
-void LoopInfoVisitor::handleForInit(Stmt* init, Kernel* kernel) {
+void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
   if (!init)
     return;
 
@@ -118,7 +119,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, Kernel* kernel) {
   }
 }
 
-void LoopInfoVisitor::handleForCond(Expr* cond, Kernel* kernel) {
+void LoopInfoVisitor::handleForCond(Expr* cond, LoopKernel* kernel) {
   if (!cond)
     return;
 
@@ -132,14 +133,14 @@ void LoopInfoVisitor::handleForCond(Expr* cond, Kernel* kernel) {
   }
 }
 
-void LoopInfoVisitor::handleForInc(Expr* inc, Kernel* kernel) {
+void LoopInfoVisitor::handleForInc(Expr* inc, LoopKernel* kernel) {
   if (!inc)
     return;
 
   kernel->inc = inc;
 }
 
-void LoopInfoVisitor::handleForBody(Stmt* body, Kernel* kernel) {
+void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
   if (!body)
     return;
 

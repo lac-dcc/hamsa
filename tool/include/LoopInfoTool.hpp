@@ -50,6 +50,7 @@ public:
 private:
   clang::ASTContext* context; ///< ASTContext to be used by the visitor.
 
+  SeqKernel root;
   llvm::DenseMap<int64_t, Kernel*> kernels; ///< Hash table of kernels identified during the Visitor's execution.
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   llvm::DenseMap<clang::ValueDecl*, std::string>
@@ -62,42 +63,42 @@ private:
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    * \param firstCall Flag to distinguish recursive calls from normal ones.
    */
-  void traverseForBody(clang::Stmt* node, Kernel* kernel, bool firstCall = true);
+  void traverseForBody(clang::Stmt* node, LoopKernel* kernel, bool firstCall = true);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.
    * \param node Root of the subtree.
    * \param kernel Kernel being visited.
    */
-  void traverseExpr(clang::Stmt* node, Kernel* kernel);
+  void traverseExpr(clang::Stmt* node, LoopKernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the initialization statement of a for loop.
    * \param init Initialization statement.
    * \param kernel Kernel being visited.
    */
-  void handleForInit(clang::Stmt* init, Kernel* kernel);
+  void handleForInit(clang::Stmt* init, LoopKernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the condition expression.
    * \param cond Condition expression.
    * \param kernel Kernel being visited.
    */
-  void handleForCond(clang::Expr* cond, Kernel* kernel);
+  void handleForCond(clang::Expr* cond, LoopKernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the increment expression.
    * \param inc Increment expression.
    * \param kernel Kernel being visited.
    */
-  void handleForInc(clang::Expr* inc, Kernel* kernel);
+  void handleForInc(clang::Expr* inc, LoopKernel* kernel);
 
   /**
    * \brief Auxiliary method used to handle the body of the for loop.
    * \param body Statement that represents the for's body.
    * \param kernel Kernel being visited.
    */
-  void handleForBody(clang::Stmt* body, Kernel* kernel);
+  void handleForBody(clang::Stmt* body, LoopKernel* kernel);
 };
 
 /**
