@@ -15,7 +15,7 @@ std::string Printer::getSourceCodeText(Expr* expr, ASTContext& Context) {
 std::string getIncRepresentation(clang::Expr* inc, ASTContext& Context) {
   if (auto uOp = dyn_cast<UnaryOperator>(inc)) {
     if (uOp->isIncrementOp())
-      return "1";
+      return "+1";
     if (uOp->isDecrementOp())
       return "-1";
   } else if (auto bOp = dyn_cast<BinaryOperator>(inc)) {
@@ -23,6 +23,10 @@ std::string getIncRepresentation(clang::Expr* inc, ASTContext& Context) {
       return Printer::getSourceCodeText(bOp->getRHS(), Context);
     else if (bOp->getOpcodeStr() == "-=")
       return "-" + Printer::getSourceCodeText(bOp->getRHS(), Context);
+    else if (bOp->getOpcodeStr() == "*=")
+      return "*" + Printer::getSourceCodeText(bOp->getRHS(), Context);
+    else if (bOp->getOpcodeStr() == "/=")
+      return "/" + Printer::getSourceCodeText(bOp->getRHS(), Context);
   }
   return Printer::getSourceCodeText(inc, Context);
 }
