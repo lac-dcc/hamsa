@@ -2,6 +2,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
 #include <fstream>
+#include <iostream>
 
 using namespace llvm;
 using namespace clang;
@@ -30,7 +31,7 @@ std::string getIncRepresentation(clang::Expr* inc, ASTContext& Context) {
   }
   return Printer::getSourceCodeText(inc, Context);
 }
-void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, ASTContext& Context, std::string outName) {
+void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, ASTContext& Context, std::string outName) {
   std::fstream outputFile;
   SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);
@@ -50,26 +51,28 @@ void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, ASTCont
   }
 }
 
-void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, ASTContext& Context, std::string outName) {
-  // std::fstream outputFile;
-  // SourceManager& srcManager = Context.getSourceManager();
-  // outputFile.open("output/" + outName, std::fstream::out);
+void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, ASTContext& Context, std::string outName) {
+  std::fstream outputFile;
+  SourceManager& srcManager = Context.getSourceManager();
+  outputFile.open("output/" + outName, std::fstream::out);
 
-  // std::string links = "";
-  // std::string nodes = "";
+  std::string links = "";
+  std::string nodes = "";
 
-  // for (auto const& [id, kernel] : kernels) {
-  //   nodes += std::to_string(kernel->id) + "[";
-  //   if (kernel->parent == nullptr)
-  //     nodes += "shape=diamond,";
-  //   nodes += "label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init,
-  //   Context) +
-  //            ", " + Printer::getSourceCodeText(kernel->limit, Context) + ", " +
-  //            getIncRepresentation(kernel->inc, Context) + ">\"]\n";
+  for (auto const& [id, kernel] : kernels) {
+    if (kernel->parent != nullptr) {
+      nodes += std::to_string((long long int) (kernel->parent)) + "[label=\" Seq \"]\n";
+      links += std::to_string((long long int) (kernel->parent)) + " -> " + std::to_string(kernel->id) + "\n";
+      std::cout << "Here\n";
 
-  //   for (auto child : kernel->children) {
-  //     links += std::to_string(kernel->id) + " -> " + std::to_string(child->id) + "\n";
-  //   }
-  // }
-  // outputFile << "digraph {\n" << nodes << '\n' << links << "}";
+    }
+    nodes += std::to_string(kernel->id) + "[";
+    nodes += "shape=diamond, label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init,
+    Context) +
+             ", " + Printer::getSourceCodeText(kernel->limit, Context) + ", " +
+             getIncRepresentation(kernel->inc, Context) + ">\"]\n";
+    if(kernel->child.children.size())
+      links += std::to_string(kernel->id) + " -> " + std::to_string((long long int) (&kernel->child)) + "\n";
+  }
+  outputFile << "digraph {\n" << nodes << '\n' << links << "}";
 }
