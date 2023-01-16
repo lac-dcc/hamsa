@@ -13,6 +13,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   else {
     kernel = new LoopKernel;
     root.children.insert(kernel);
+    kernel->parent = &root;
     kernel->id = id;
     this->loopKernels.insert(std::make_pair(id, kernel));
   }
@@ -57,7 +58,7 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool first
       if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
         LoopKernel* childKernel = new LoopKernel;
         childKernel->id = nestedFor->getID(*this->context);
-        childKernel->parent = kernel;
+        childKernel->parent = &kernel->child;
         kernel->child.children.insert(childKernel);
         this->loopKernels.insert(std::make_pair(childKernel->id, childKernel));
       }
@@ -156,10 +157,10 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   if (this->outputFormat == "txt" || this->outputFormat == "TXT") {
     visitor.root.eval(Context);
     TextPrinter printer;
-    printer.gen_out(visitor.getKernels(), Context, this->outputFile);
+    printer.gen_out(visitor.getKernels(), visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
     DOTPrinter printer;
-    printer.gen_out(visitor.getKernels(), Context, this->outputFile);
+    printer.gen_out(visitor.getKernels(), visitor.root, Context, this->outputFile);
   }
 }
 
