@@ -21,9 +21,6 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
-  SeqKernel root;
-  clang::ASTContext* context; ///< ASTContext to be used by the visitor.
-
   /**
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
@@ -51,6 +48,7 @@ public:
   llvm::DenseMap<int64_t, LoopKernel*> getKernels();
 
 private:
+  clang::ASTContext* context; ///< ASTContext to be used by the visitor.
   llvm::DenseMap<int64_t, LoopKernel*>
       loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
