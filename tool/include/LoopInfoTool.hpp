@@ -21,6 +21,8 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
+  SeqKernel root;
+
   /**
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
