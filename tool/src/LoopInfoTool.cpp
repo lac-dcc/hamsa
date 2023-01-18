@@ -11,11 +11,10 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   if (this->loopKernels.find(id) != this->loopKernels.end())
     kernel = this->loopKernels[id];
   else {
-    kernel = new LoopKernel;
+    kernel = new LoopKernel(id);
     root.children.insert(kernel);
     kernel->parent = &root;
-    kernel->id = id;
-    this->loopKernels.insert(std::make_pair(id, kernel));
+    this->loopKernels[id] = kernel;
   }
 
   this->handleForInit(fstmt->getInit(), kernel);
@@ -50,17 +49,16 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool first
     if (auto* declStmt = dyn_cast<DeclStmt>(child)) {
       for (auto* decl : declStmt->decls()) {
         if (auto* varDecl = dyn_cast<VarDecl>(decl))
-          this->bodyDeclarations.insert(std::make_pair(varDecl, varDecl->getNameAsString()));
+          this->bodyDeclarations[varDecl] = varDecl->getNameAsString();
       }
     }
 
     if (firstCall) {
       if (auto* nestedFor = dyn_cast<ForStmt>(child)) {
-        LoopKernel* childKernel = new LoopKernel;
-        childKernel->id = nestedFor->getID(*this->context);
-        childKernel->parent = &kernel->child;
-        kernel->child.children.insert(childKernel);
-        this->loopKernels.insert(std::make_pair(childKernel->id, childKernel));
+        LoopKernel* childKernel = new LoopKernel(nestedFor->getID(*this->context));
+        childKernel->parent = kernel->child;
+        kernel->child->children.insert(childKernel);
+        this->loopKernels[childKernel->id] = childKernel;
       }
     }
 
@@ -106,7 +104,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
   else if (auto* varDeclStmt = dyn_cast<DeclStmt>(init)) {
     if (auto* valDecl = dyn_cast<VarDecl>(varDeclStmt->getSingleDecl())) {
       kernel->induc = valDecl;
-      this->bodyDeclarations.insert(std::make_pair(valDecl, valDecl->getNameAsString()));
+      this->bodyDeclarations[valDecl] = valDecl->getNameAsString();
 
       kernel->init = valDecl->getInit();
 

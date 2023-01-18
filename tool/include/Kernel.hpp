@@ -15,7 +15,7 @@
  */
 class Kernel {
 public:
-  int64_t id;                                  ///< Kernel id.
+  Kernel* parent = nullptr;                    ///< Parent kernel (if there is any).
   llvm::SmallSet<clang::ValueDecl*, 8> inputs; ///< Set of inputs of the kernel.
   clang::SourceLocation begin;                 ///< Location of the beginning of the kernel.
   std::string complexity;                      ///< Kernel asymptotic complexity.
@@ -27,26 +27,32 @@ public:
 class SeqKernel : public Kernel {
 public:
   llvm::SmallSet<Kernel*, 3> children;
-  Kernel* parent = nullptr;                    ///< Parent kernel (if there is any).
   virtual std::string eval(clang::ASTContext& context);
 };
 
 class LoopKernel : public Kernel {
 public:
-  SeqKernel child;              ///< Loop child.
-  clang::VarDecl* induc;        ///< Induction variable.
-  clang::Expr* init;            ///< Induction variable's initial value.
-  clang::Expr* limit;           ///< Induction variable's limit.
-  clang::Expr* inc;             ///< Induction variable's increment at each iteration.
-  SeqKernel* parent = nullptr;     ///< Parent kernel (if there is any).
+  LoopKernel(int64_t id);
+  ~LoopKernel();
+
+  const int64_t id;      ///< Kernel id.
+  SeqKernel* child;      ///< Loop child.
+  clang::VarDecl* induc; ///< Induction variable.
+  clang::Expr* init;     ///< Induction variable's initial value.
+  clang::Expr* limit;    ///< Induction variable's limit.
+  clang::Expr* inc;      ///< Induction variable's increment at each iteration.
+
   virtual std::string eval(clang::ASTContext& context);
 };
 
 class CondKernel : public Kernel {
 public:
-  SeqKernel leftChild;
-  SeqKernel rightChild;
-  SeqKernel* parent = nullptr;                              ///< Parent kernel (if there is any).
+  CondKernel();
+  ~CondKernel();
+  
+  SeqKernel* thenChild;
+  SeqKernel* elseChild = nullptr;
+
   virtual std::string eval(clang::ASTContext& context);
 };
 

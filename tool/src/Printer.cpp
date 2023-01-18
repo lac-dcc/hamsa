@@ -63,15 +63,13 @@ void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const Se
     if (kernel->parent != nullptr) {
       nodes += std::to_string((long long int) (kernel->parent)) + "[label=\" Seq \"]\n";
       links += std::to_string((long long int) (kernel->parent)) + " -> " + std::to_string(kernel->id) + "\n";
-      std::cout << "Here\n";
-
     }
     nodes += std::to_string(kernel->id) + "[";
-    nodes += "shape=diamond, label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init,
+    nodes += "label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init,
     Context) +
              ", " + Printer::getSourceCodeText(kernel->limit, Context) + ", " +
              getIncRepresentation(kernel->inc, Context) + ">\"]\n";
-    if(kernel->child.children.size())
+    if(kernel->child->children.size())
       links += std::to_string(kernel->id) + " -> " + std::to_string((long long int) (&kernel->child)) + "\n";
   }
   outputFile << "digraph {\n" << nodes << '\n' << links << "}";
