@@ -31,7 +31,7 @@ std::string getIncRepresentation(clang::Expr* inc, ASTContext& Context) {
   }
   return Printer::getSourceCodeText(inc, Context);
 }
-void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, ASTContext& Context, std::string outName) {
+void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel* root, ASTContext& Context, std::string outName) {
   std::fstream outputFile;
   SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);
@@ -51,7 +51,7 @@ void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const S
   }
 }
 
-void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, ASTContext& Context, std::string outName) {
+void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel* root, ASTContext& Context, std::string outName) {
   std::fstream outputFile;
   SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);

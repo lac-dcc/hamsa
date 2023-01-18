@@ -7,6 +7,8 @@
 #include "llvm/ADT/SmallSet.h"
 #include <string>
 
+class KernelVisitor;
+
 /**
  * \class Kernel
  *
@@ -20,14 +22,16 @@ public:
   clang::SourceLocation begin;                 ///< Location of the beginning of the kernel.
   std::string complexity;                      ///< Kernel asymptotic complexity.
 
-  virtual std::string eval(clang::ASTContext& context) = 0; ///< Kernel asymptotic complexity.
+  virtual std::string accept(KernelVisitor* visitor) = 0;
   virtual ~Kernel() = default;
 };
 
 class SeqKernel : public Kernel {
 public:
   llvm::SmallSet<Kernel*, 3> children;
-  virtual std::string eval(clang::ASTContext& context);
+
+  virtual std::string accept(KernelVisitor* visitor);
+  // virtual std::string eval(clang::ASTContext& context);
 };
 
 class LoopKernel : public Kernel {
@@ -42,7 +46,7 @@ public:
   clang::Expr* limit;    ///< Induction variable's limit.
   clang::Expr* inc;      ///< Induction variable's increment at each iteration.
 
-  virtual std::string eval(clang::ASTContext& context);
+  virtual std::string accept(KernelVisitor* visitor);
 };
 
 class CondKernel : public Kernel {
@@ -53,7 +57,7 @@ public:
   SeqKernel* thenChild;
   SeqKernel* elseChild = nullptr;
 
-  virtual std::string eval(clang::ASTContext& context);
+  virtual std::string accept(KernelVisitor* visitor);
 };
 
 #endif

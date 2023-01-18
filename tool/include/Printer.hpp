@@ -11,20 +11,20 @@
 
 class Printer {
 public:
-  virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, clang::ASTContext& Context,
+  virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel* root, clang::ASTContext& Context,
                        std::string outName) = 0;
   static std::string getSourceCodeText(clang::Expr* expr, clang::ASTContext& Context);
 };
 
 class TextPrinter : public Printer {
 public:
-  virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, clang::ASTContext& Context,
+  virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel* root, clang::ASTContext& Context,
                        std::string outName);
 };
 
 class DOTPrinter : public Printer {
 public:
-  virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel& root, clang::ASTContext& Context,
+  virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, const SeqKernel* root, clang::ASTContext& Context,
                        std::string outName);
 };
 #endif

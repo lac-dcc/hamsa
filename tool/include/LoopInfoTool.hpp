@@ -21,18 +21,22 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
-  SeqKernel root;
+  SeqKernel* root;
 
   /**
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
    */
-  explicit LoopInfoVisitor(clang::ASTContext* context) : context(context) {}
+  explicit LoopInfoVisitor(clang::ASTContext* context) : context(context) {
+    this->root = new SeqKernel;
+  }
 
   /**
    * \brief Destructor method.
    */
   ~LoopInfoVisitor() {
+    delete this->root;
+
     for (auto it = this->loopKernels.begin(), end = this->loopKernels.end(); it != end; ++it)
       delete it->second;
   }

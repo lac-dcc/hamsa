@@ -1,6 +1,7 @@
 #include "LoopInfoTool.hpp"
 #include "Complexity.hpp"
 #include "Printer.hpp"
+#include "KernelVisitor.hpp"
 
 using namespace clang;
 using namespace llvm;
@@ -12,8 +13,8 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
     kernel = this->loopKernels[id];
   else {
     kernel = new LoopKernel(id);
-    root.children.insert(kernel);
-    kernel->parent = &root;
+    root->children.insert(kernel);
+    kernel->parent = root;
     this->loopKernels[id] = kernel;
   }
 
@@ -153,7 +154,9 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
 
   if (this->outputFormat == "txt" || this->outputFormat == "TXT") {
-    visitor.root.eval(Context);
+    ComplexityKernelVisitor complexityVisitor(&Context);
+    complexityVisitor.visit(visitor.root);
+
     TextPrinter printer;
     printer.gen_out(visitor.getKernels(), visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
