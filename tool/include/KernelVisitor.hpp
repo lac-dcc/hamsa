@@ -30,6 +30,15 @@ public:
   virtual std::string visit(CondKernel* kernel);
 };
 
+class DotKernelVisitor : public KernelVisitor {
+public:
+  DotKernelVisitor(clang::ASTContext* context) : KernelVisitor(context) {}
+  
+  virtual std::string visit(LoopKernel* kernel);
+  virtual std::string visit(SeqKernel* kernel);
+  virtual std::string visit(CondKernel* kernel);
+};
+
 // class TxtKernelVisitor : public KernelVisitor {
 // public:
 //   virtual std::string visit(LoopKernel* kernel);
@@ -37,11 +46,5 @@ public:
 //   virtual std::string visit(CondKernel* kernel);
 // };
 
-// class DotKernelVisitor : public KernelVisitor {
-// public:
-//   virtual std::string visit(LoopKernel* kernel);
-//   virtual std::string visit(SeqKernel* kernel);
-//   virtual std::string visit(CondKernel* kernel);
-// };
 
 #endif

@@ -54,3 +54,30 @@ std::string ComplexityKernelVisitor::visit(CondKernel* kernel) {
 
   return kernel->complexity;
 }
+
+std::string DotKernelVisitor::visit(LoopKernel* kernel) {
+  std::string link = "";
+  if(kernel->child->children.size() > 0)
+    link+=std::to_string(kernel->id)+" -> "+std::to_string(kernel->child->id)+"\n"+this->visit(kernel->child);
+  return link;
+}
+
+std::string DotKernelVisitor::visit(SeqKernel* kernel) {
+ std::string links = "";
+ std::string identifier = std::to_string(kernel->id);
+ std::string label = identifier + "[label=\"Seq\"]\n";
+ for(auto child : kernel->children) {
+    links += identifier + " -> " + std::to_string(child->id) + "\n" + child->accept(this);
+ }
+
+ return label + links;
+}
+
+std::string DotKernelVisitor::visit(CondKernel* kernel) {
+ std::string links = "";
+ std::string label = std::to_string(kernel->id) + "[label=\"Cond\"]\n";
+ links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" + this->visit(kernel->thenChild);
+ if(kernel->elseChild->children.size() > 0)
+  links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->elseChild->id) + "\n" + this->visit(kernel->elseChild);
+ return label + links;
+}

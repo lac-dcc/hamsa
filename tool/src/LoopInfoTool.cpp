@@ -1,7 +1,7 @@
-#include "LoopInfoTool.hpp"
 #include "Complexity.hpp"
-#include "Printer.hpp"
 #include "KernelVisitor.hpp"
+#include "LoopInfoTool.hpp"
+#include "Printer.hpp"
 
 using namespace clang;
 using namespace llvm;
@@ -9,9 +9,9 @@ using namespace llvm;
 bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   LoopKernel* kernel;
   int64_t id = fstmt->getID(*this->context);
-  if (this->loopKernels.find(id) != this->loopKernels.end())
+  if (this->loopKernels.find(id) != this->loopKernels.end()) {
     kernel = this->loopKernels[id];
-  else {
+  } else {
     kernel = new LoopKernel(id);
     root->children.insert(kernel);
     kernel->parent = root;
@@ -52,6 +52,14 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool first
         if (auto* varDecl = dyn_cast<VarDecl>(decl))
           this->bodyDeclarations[varDecl] = varDecl->getNameAsString();
       }
+    }
+
+    if (auto* ifstmt = dyn_cast<IfStmt>(child)) {
+      auto id = ifstmt->getID(*this->context);
+      auto cond = new CondKernel(id);
+      this->condKernels[id] = cond;
+      cond->parent = kernel->child;
+      kernel->child->children.insert(cond);
     }
 
     if (firstCall) {
@@ -146,6 +154,53 @@ void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
 
   if (auto* bodyStmt = dyn_cast<CompoundStmt>(body))
     this->traverseForBody(bodyStmt, kernel);
+}
+
+bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
+  auto id = ifstmt->getID(*this->context);
+  CondKernel* cond;
+  if (this->condKernels.find(id) != this->condKernels.end()) {
+    cond = condKernels[id];
+  } else {
+    auto cond = new CondKernel(id);
+  }
+  auto thenBody = ifstmt->getThen();
+  bool found = false;
+
+  for (auto child : thenBody->children()) {
+    if (auto foundFor = dyn_cast<ForStmt>(child)) {
+      found = true;
+      auto id = foundFor->getID(*this->context);
+      if (this->loopKernels.find(id) == this->loopKernels.end()) {
+        auto loop = new LoopKernel(id);
+        this->loopKernels[id] = loop;
+        loop->parent = cond->thenChild;
+        cond->thenChild->children.insert(loop);
+      }
+    }
+  }
+
+  if (ifstmt->hasElseStorage()) {
+    auto elseBody = ifstmt->getElse();
+    for (auto child : elseBody->children()) {
+      if (auto foundFor = dyn_cast<ForStmt>(child)) {
+        found = true;
+        auto id = foundFor->getID(*this->context);
+        if (this->loopKernels.find(id) == this->loopKernels.end()) {
+          auto loop = new LoopKernel(id);
+          this->loopKernels.insert(std::make_pair(id, loop));
+          cond->elseChild->children.insert(loop);
+        }
+      }
+    }
+  }
+
+  if (found && this->condKernels.find(id) == this->condKernels.end()) {
+    this->condKernels[cond->id] = cond;
+    cond->parent = this->root;
+    this->root->children.insert(cond);
+  }
+  return true;
 }
 
 DenseMap<int64_t, LoopKernel*> LoopInfoVisitor::getKernels() { return this->loopKernels; }

@@ -6,22 +6,27 @@
 using namespace clang;
 
 
-LoopKernel::LoopKernel(int64_t id) : id(id) {
+LoopKernel::LoopKernel(int64_t id) {
   this->child = new SeqKernel;
+  this->child->id = id+1;
+  this->id = id;
 }
 
 LoopKernel::~LoopKernel() {
   delete this->child;
 }
 
-CondKernel::CondKernel() {
+CondKernel::CondKernel(int64_t id) {
   this->thenChild = new SeqKernel;
+  this->elseChild = new SeqKernel;
+  this->id = id;
+  this->thenChild->id = id+1;
+  this->elseChild->id = id+2;
 }
 
 CondKernel::~CondKernel() {
   delete this->thenChild;
-  if(this->elseChild != nullptr)
-    delete this->elseChild;
+  delete this->elseChild;
 }
 
 std::string LoopKernel::accept(KernelVisitor* visitor) {

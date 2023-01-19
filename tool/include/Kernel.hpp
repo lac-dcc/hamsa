@@ -21,6 +21,7 @@ public:
   llvm::SmallSet<clang::ValueDecl*, 8> inputs; ///< Set of inputs of the kernel.
   clang::SourceLocation begin;                 ///< Location of the beginning of the kernel.
   std::string complexity;                      ///< Kernel asymptotic complexity.
+  int64_t id;                                  ///< Kernel id.
 
   virtual std::string accept(KernelVisitor* visitor) = 0;
   virtual ~Kernel() = default;
@@ -39,7 +40,6 @@ public:
   LoopKernel(int64_t id);
   ~LoopKernel();
 
-  const int64_t id;      ///< Kernel id.
   SeqKernel* child;      ///< Loop child.
   clang::VarDecl* induc; ///< Induction variable.
   clang::Expr* init;     ///< Induction variable's initial value.
@@ -51,11 +51,11 @@ public:
 
 class CondKernel : public Kernel {
 public:
-  CondKernel();
+  CondKernel(int64_t id);
   ~CondKernel();
-  
+
   SeqKernel* thenChild;
-  SeqKernel* elseChild = nullptr;
+  SeqKernel* elseChild;
 
   virtual std::string accept(KernelVisitor* visitor);
 };

@@ -48,6 +48,12 @@ public:
   bool VisitForStmt(clang::ForStmt* fstmt);
 
   /**
+   * \brief Visit method to be applied to ForStmt nodes.
+   * \param fstmt ForStmt node being currently visited.
+   */
+  bool VisitIfStmt(clang::IfStmt* ifstmt);
+
+  /**
    * \brief Getter for the kernels attribute.
    * \return Hash table of kernels.
    */
@@ -55,11 +61,10 @@ public:
 
 private:
   clang::ASTContext* context; ///< ASTContext to be used by the visitor.
-  llvm::DenseMap<int64_t, LoopKernel*>
-      loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
+  llvm::DenseMap<int64_t, LoopKernel*> loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
+  llvm::DenseMap<int64_t, CondKernel*> condKernels; ///< Hash table of cond kernels identified during the Visitor's execution.
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
-  llvm::DenseMap<clang::ValueDecl*, std::string>
-      bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
+  llvm::DenseMap<clang::ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
 
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
