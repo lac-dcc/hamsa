@@ -3,7 +3,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
 #include <fstream>
-#include <iostream>
 
 using namespace llvm;
 using namespace clang;
@@ -14,7 +13,7 @@ std::string Printer::getSourceCodeText(Expr* expr, ASTContext& Context) {
   return Lexer::getSourceText(CharSourceRange::getTokenRange(expr->getSourceRange()), srcManager, langOpts).str();
 }
 
-std::string getIncRepresentation(clang::Expr* inc, ASTContext& Context) {
+std::string Printer::getIncRepresentation(Expr* inc, ASTContext& Context) {
   if (auto uOp = dyn_cast<UnaryOperator>(inc)) {
     if (uOp->isIncrementOp())
       return "+1";
@@ -30,31 +29,21 @@ std::string getIncRepresentation(clang::Expr* inc, ASTContext& Context) {
     else if (bOp->getOpcodeStr() == "/=")
       return "/" + Printer::getSourceCodeText(bOp->getRHS(), Context);
   }
+
   return Printer::getSourceCodeText(inc, Context);
 }
-void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context, std::string outName) {
+
+void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context,
+                          std::string outName) {
   std::fstream outputFile;
-  SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);
-
-  for (auto const& [id, kernel] : kernels) {
-    outputFile << "at line " << srcManager.getSpellingLineNumber(kernel->begin) << ": "
-               << kernel->induc->getNameAsString() << ", <" << Printer::getSourceCodeText(kernel->init, Context) << ", "
-               << Printer::getSourceCodeText(kernel->limit, Context) << ", "
-               << getIncRepresentation(kernel->inc, Context) << "> [";
-
-    bool isFirst = true;
-    for (auto* input : kernel->inputs) {
-      outputFile << (isFirst ? isFirst = false, "" : ", ") << input->getNameAsString();
-    }
-
-    outputFile << "], O(" << kernel->complexity << ")\n";
-  }
+  TxtKernelVisitor txtVisitor(&Context);
+  outputFile << txtVisitor.visit(root);
 }
 
-void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context, std::string outName) {
+void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context,
+                         std::string outName) {
   std::fstream outputFile;
-  SourceManager& srcManager = Context.getSourceManager();
   outputFile.open("output/" + outName, std::fstream::out);
   DotKernelVisitor visitor(&Context);
   std::string links = visitor.visit(root);
@@ -62,12 +51,9 @@ void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKerne
 
   for (auto const& [id, kernel] : kernels) {
     nodes += std::to_string(kernel->id) + "[";
-    nodes += "label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init,
-    Context) +
+    nodes += "label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init, Context) +
              ", " + Printer::getSourceCodeText(kernel->limit, Context) + ", " +
-             getIncRepresentation(kernel->inc, Context) + ">\"]\n";
-    // if(kernel->child->children.size())
-    //   links += std::to_string(kernel->id) + " -> " + std::to_string((long long int) (&kernel->child)) + "\n";
+             Printer::getIncRepresentation(kernel->inc, Context) + ">\"]\n";
   }
   outputFile << "digraph {\n" << nodes << '\n' << links << "}";
 }

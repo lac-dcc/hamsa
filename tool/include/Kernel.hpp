@@ -32,7 +32,6 @@ public:
   llvm::SmallSet<Kernel*, 3> children;
 
   virtual std::string accept(KernelVisitor* visitor);
-  // virtual std::string eval(clang::ASTContext& context);
 };
 
 class LoopKernel : public Kernel {

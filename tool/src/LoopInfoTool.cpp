@@ -1,6 +1,6 @@
+#include "LoopInfoTool.hpp"
 #include "Complexity.hpp"
 #include "KernelVisitor.hpp"
-#include "LoopInfoTool.hpp"
 #include "Printer.hpp"
 
 using namespace clang;

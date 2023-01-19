@@ -48,36 +48,72 @@ std::string ComplexityKernelVisitor::visit(SeqKernel* kernel) {
 std::string ComplexityKernelVisitor::visit(CondKernel* kernel) {
   kernel->complexity = this->visit(kernel->thenChild);
 
-  if (kernel->elseChild != nullptr) {
+  if (kernel->elseChild != nullptr)
     kernel->complexity = "(" + kernel->complexity + " | " + this->visit(kernel->elseChild) + ")";
-  } 
 
   return kernel->complexity;
 }
 
+std::string TxtKernelVisitor::visit(LoopKernel* kernel) {
+  SourceManager& srcManager = this->context->getSourceManager();
+  std::string out = "at line " + std::to_string(srcManager.getSpellingLineNumber(kernel->begin)) + ": " +
+                    kernel->induc->getNameAsString() + ", <" +
+                    Printer::getSourceCodeText(kernel->init, *this->context) + ", " +
+                    Printer::getSourceCodeText(kernel->limit, *this->context) + ", " +
+                    Printer::getIncRepresentation(kernel->inc, *this->context) + "> [";
+
+  bool isFirst = true;
+  for (auto* input : kernel->inputs) {
+    out += (isFirst ? isFirst = false, "" : ", ") + input->getNameAsString();
+  }
+
+  out += "], O(" + kernel->complexity + ")\n";
+
+  return out + this->visit(kernel->child);
+}
+
+std::string TxtKernelVisitor::visit(SeqKernel* kernel) {
+  std::string out = "";
+  for (Kernel* child : kernel->children) {
+    out += child->accept(this);
+  }
+
+  return out;
+}
+
+std::string TxtKernelVisitor::visit(CondKernel* kernel) {
+  std::string out = this->visit(kernel->thenChild);
+  if (kernel->elseChild != nullptr)
+    out += this->visit(kernel->elseChild);
+
+  return out;
+}
+
 std::string DotKernelVisitor::visit(LoopKernel* kernel) {
   std::string link = "";
-  if(kernel->child->children.size() > 0)
-    link+=std::to_string(kernel->id)+" -> "+std::to_string(kernel->child->id)+"\n"+this->visit(kernel->child);
+  if (kernel->child->children.size() > 0)
+    link += std::to_string(kernel->id) + " -> " + std::to_string(kernel->child->id) + "\n" + this->visit(kernel->child);
   return link;
 }
 
 std::string DotKernelVisitor::visit(SeqKernel* kernel) {
- std::string links = "";
- std::string identifier = std::to_string(kernel->id);
- std::string label = identifier + "[label=\"Seq\"]\n";
- for(auto child : kernel->children) {
+  std::string links = "";
+  std::string identifier = std::to_string(kernel->id);
+  std::string label = identifier + "[label=\"Seq\"]\n";
+  for (auto child : kernel->children) {
     links += identifier + " -> " + std::to_string(child->id) + "\n" + child->accept(this);
- }
+  }
 
- return label + links;
+  return label + links;
 }
 
 std::string DotKernelVisitor::visit(CondKernel* kernel) {
- std::string links = "";
- std::string label = std::to_string(kernel->id) + "[label=\"Cond\"]\n";
- links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" + this->visit(kernel->thenChild);
- if(kernel->elseChild->children.size() > 0)
-  links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->elseChild->id) + "\n" + this->visit(kernel->elseChild);
- return label + links;
+  std::string links = "";
+  std::string label = std::to_string(kernel->id) + "[label=\"Cond\"]\n";
+  links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" +
+           this->visit(kernel->thenChild);
+  if (kernel->elseChild->children.size() > 0)
+    links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->elseChild->id) + "\n" +
+             this->visit(kernel->elseChild);
+  return label + links;
 }

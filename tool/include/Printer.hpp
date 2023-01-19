@@ -14,6 +14,7 @@ public:
   virtual void gen_out(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, clang::ASTContext& Context,
                        std::string outName) = 0;
   static std::string getSourceCodeText(clang::Expr* expr, clang::ASTContext& Context);
+  static std::string getIncRepresentation(clang::Expr* inc, clang::ASTContext& Context);
 };
 
 class TextPrinter : public Printer {
