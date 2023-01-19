@@ -162,7 +162,7 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
   if (this->condKernels.find(id) != this->condKernels.end()) {
     cond = condKernels[id];
   } else {
-    auto cond = new CondKernel(id);
+    cond = new CondKernel(id);
   }
   auto thenBody = ifstmt->getThen();
   bool found = false;
