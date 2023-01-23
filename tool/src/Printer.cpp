@@ -38,7 +38,7 @@ void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKern
   std::fstream outputFile;
   outputFile.open("output/" + outName, std::fstream::out);
   TxtKernelVisitor txtVisitor(&Context);
-  outputFile << txtVisitor.visit(root);
+  outputFile << txtVisitor.visit(root) << "\nTotal complexity: O(" << root->complexity << ")";
 }
 
 void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context,
@@ -46,14 +46,5 @@ void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKerne
   std::fstream outputFile;
   outputFile.open("output/" + outName, std::fstream::out);
   DotKernelVisitor visitor(&Context);
-  std::string links = visitor.visit(root);
-  std::string nodes = "";
-
-  for (auto const& [id, kernel] : kernels) {
-    nodes += std::to_string(kernel->id) + "[";
-    nodes += "label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init, Context) +
-             ", " + Printer::getSourceCodeText(kernel->limit, Context) + ", " +
-             Printer::getIncRepresentation(kernel->inc, Context) + ">\"]\n";
-  }
-  outputFile << "digraph {\n" << nodes << '\n' << links << "}";
+  outputFile << "digraph {\n" << visitor.visit(root) << "}";
 }

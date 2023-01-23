@@ -180,8 +180,10 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
     }
   }
 
-  if (cond->parent != nullptr)
+  if (cond != nullptr && cond->parent != nullptr) {
     cond->parent->children.insert(cond);
+    cond->condition = ifstmt->getCond();
+  }
 
   return true;
 }

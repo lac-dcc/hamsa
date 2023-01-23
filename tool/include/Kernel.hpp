@@ -53,6 +53,7 @@ public:
   CondKernel(int64_t id);
   ~CondKernel();
   
+  clang::Expr* condition;
   SeqKernel* parent = nullptr;                    ///< Parent kernel (if there is any).
   SeqKernel* thenChild;
   SeqKernel* elseChild;

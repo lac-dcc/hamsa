@@ -6,9 +6,10 @@
 #include "clang/AST/ASTContext.h"
 
 /**
- * \brief Infer the complexity of each Kernel in a map of Kernels.
- * \param kernels Hash map of Kernels.
+ * \brief Calculate the cost of a single loop from its triplet information.
+ * \param kernel Target kernel.
+ * \param context ASTContext to be used by the function.
  */
-void inferComplexity(const llvm::DenseMap<int64_t, LoopKernel*>& kernels, clang::ASTContext& Context);
+std::string calculateSingleCost(LoopKernel* kernel, clang::ASTContext& context);
 
 #endif

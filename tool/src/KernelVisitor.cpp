@@ -1,27 +1,8 @@
 #include "KernelVisitor.hpp"
 #include "Printer.hpp"
+#include "Complexity.hpp"
 
 using namespace clang;
-
-std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
-  std::string tempInit = Printer::getSourceCodeText(kernel->init, context);
-  std::string tempLimit = Printer::getSourceCodeText(kernel->limit, context);
-  std::string tempInc = Printer::getSourceCodeText(kernel->inc, context);
-  std::string tempInduc = kernel->induc->getNameAsString();
-  if (tempInc == tempInduc + "++")
-    tempInc = "1";
-  else if (tempInc == tempInduc + "--")
-    tempInc = "-1";
-
-  if (isdigit(tempInit[0]) && isdigit(tempLimit[0]) && isdigit(tempInc[0]))
-    return "1";
-  else if (isdigit(tempInit[0]) && !isdigit(tempLimit[0]) && (isdigit(tempInc[0]) || isdigit(tempInc[1])))
-    return tempLimit;
-  else if (!isdigit(tempInit[0]) && isdigit(tempLimit[0]) && (isdigit(tempInc[0]) || isdigit(tempInc[1])))
-    return tempInit;
-  else
-    return "unknown";
-}
 
 std::string ComplexityKernelVisitor::visit(LoopKernel* kernel) {
   kernel->complexity = calculateSingleCost(kernel, *this->context) + "*" + this->visit(kernel->child);
@@ -82,18 +63,25 @@ std::string TxtKernelVisitor::visit(SeqKernel* kernel) {
 }
 
 std::string TxtKernelVisitor::visit(CondKernel* kernel) {
-  std::string out = this->visit(kernel->thenChild);
+  std::string out = "if " + Printer::getSourceCodeText(kernel->condition, *this->context) + "\n\t" + this->visit(kernel->thenChild);
   if (kernel->elseChild != nullptr)
-    out += this->visit(kernel->elseChild);
+    out += "else\n\t" + this->visit(kernel->elseChild);
 
   return out;
 }
 
 std::string DotKernelVisitor::visit(LoopKernel* kernel) {
   std::string link = "";
+  std::string label = "";
+  std::string identifier = std::to_string(kernel->id);
+
   if (kernel->child->children.size() > 0)
-    link += std::to_string(kernel->id) + " -> " + std::to_string(kernel->child->id) + "\n" + this->visit(kernel->child);
-  return link;
+    link += identifier + " -> " + std::to_string(kernel->child->id) + "\n" + this->visit(kernel->child);
+
+  label += identifier + "[label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init, *this->context) +
+             ", " + Printer::getSourceCodeText(kernel->limit, *this->context) + ", " +
+             Printer::getIncRepresentation(kernel->inc, *this->context) + ">\"]\n";
+  return link + label;
 }
 
 std::string DotKernelVisitor::visit(SeqKernel* kernel) {
@@ -109,7 +97,7 @@ std::string DotKernelVisitor::visit(SeqKernel* kernel) {
 
 std::string DotKernelVisitor::visit(CondKernel* kernel) {
   std::string links = "";
-  std::string label = std::to_string(kernel->id) + "[label=\"Cond\"]\n";
+  std::string label = std::to_string(kernel->id) + "[shape=diamond, label=\"" + Printer::getSourceCodeText(kernel->condition, *this->context) + "\"]\n";
   links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" +
            this->visit(kernel->thenChild);
   if (kernel->elseChild->children.size() > 0)
