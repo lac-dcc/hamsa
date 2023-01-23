@@ -62,7 +62,7 @@ public:
 private:
   clang::ASTContext* context; ///< ASTContext to be used by the visitor.
   llvm::DenseMap<int64_t, LoopKernel*> loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
-  llvm::DenseMap<int64_t, CondKernel*> condKernels; ///< Hash table of cond kernels identified during the Visitor's execution.
+  llvm::DenseMap<int64_t, SeqKernel*> ifStmtParents;///< Hash table that associates a ifStmt id with its parent.
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   llvm::DenseMap<clang::ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
 
@@ -74,6 +74,13 @@ private:
    * \param firstCall Flag to distinguish recursive calls from normal ones.
    */
   void traverseForBody(clang::Stmt* node, LoopKernel* kernel, bool firstCall = true);
+
+    /**
+   * \brief Depth-first traversal that searches for ForStmt in a IfStmt's body.
+   * \param node Root of the subtree.
+   * \param nested Flag that indicates if the current ForStmt is a nested for.
+   */
+  void traverseIfBody(clang::Stmt* node, int64_t& ifstmtId, CondKernel*& cond, bool isElse = false);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.
@@ -109,6 +116,13 @@ private:
    * \param kernel Kernel being visited.
    */
   void handleForBody(clang::Stmt* body, LoopKernel* kernel);
+
+  /**
+   * \brief Auxiliary method used to handle the body of the If Stmt.
+   * \param body Statement that represents the if's body.
+   * \param kernel Kernel being visited.
+   */
+  void handleIfBody(clang::Stmt* body, CondKernel* kernel);
 };
 
 /**
