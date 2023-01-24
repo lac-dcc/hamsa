@@ -33,16 +33,14 @@ std::string Printer::getIncRepresentation(Expr* inc, ASTContext& Context) {
   return Printer::getSourceCodeText(inc, Context);
 }
 
-void TextPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context,
-                          std::string outName) {
+void TxtPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
   std::fstream outputFile;
   outputFile.open("output/" + outName, std::fstream::out);
   TxtKernelVisitor txtVisitor(&Context);
   outputFile << txtVisitor.visit(root) << "\nTotal complexity: O(" << root->complexity << ")";
 }
 
-void DOTPrinter::gen_out(const DenseMap<int64_t, LoopKernel*>& kernels, SeqKernel* root, ASTContext& Context,
-                         std::string outName) {
+void DotPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
   std::fstream outputFile;
   outputFile.open("output/" + outName, std::fstream::out);
   DotKernelVisitor visitor(&Context);

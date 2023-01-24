@@ -21,15 +21,13 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
-  SeqKernel* root;
+  SeqKernel* root; ///< Kernels tree root.
 
   /**
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
    */
-  explicit LoopInfoVisitor(clang::ASTContext* context) : context(context) {
-    this->root = new SeqKernel;
-  }
+  explicit LoopInfoVisitor(clang::ASTContext* context) : context(context) { this->root = new SeqKernel; }
 
   /**
    * \brief Destructor method.
@@ -53,18 +51,14 @@ public:
    */
   bool VisitIfStmt(clang::IfStmt* ifstmt);
 
-  /**
-   * \brief Getter for the kernels attribute.
-   * \return Hash table of kernels.
-   */
-  llvm::DenseMap<int64_t, LoopKernel*> getKernels();
-
 private:
   clang::ASTContext* context; ///< ASTContext to be used by the visitor.
-  llvm::DenseMap<int64_t, LoopKernel*> loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
-  llvm::DenseMap<int64_t, SeqKernel*> ifStmtParents;///< Hash table that associates a ifStmt id with its parent.
+  llvm::DenseMap<int64_t, LoopKernel*>
+      loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
+  llvm::DenseMap<int64_t, SeqKernel*> ifStmtParents; ///< Hash table that associates a ifStmt id with its parent.
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
-  llvm::DenseMap<clang::ValueDecl*, std::string> bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
+  llvm::DenseMap<clang::ValueDecl*, std::string>
+      bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
 
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
@@ -75,7 +69,7 @@ private:
    */
   void traverseForBody(clang::Stmt* node, LoopKernel* kernel, bool firstCall = true);
 
-    /**
+  /**
    * \brief Depth-first traversal that searches for ForStmt in a IfStmt's body.
    * \param node Root of the subtree.
    * \param nested Flag that indicates if the current ForStmt is a nested for.
@@ -147,7 +141,7 @@ private:
  * \class LoopInfoAction
  *
  * \brief Class used to define a Clang plugin action.
- * To know more about plugins: https://youtu.be/SnP-8QM-TlI
+ * To know more about Clang plugins: https://youtu.be/SnP-8QM-TlI
  */
 class LoopInfoAction : public clang::PluginASTAction {
 protected:

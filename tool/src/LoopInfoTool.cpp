@@ -223,8 +223,6 @@ void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, int64_t& ifstmtId, CondK
   }
 }
 
-DenseMap<int64_t, LoopKernel*> LoopInfoVisitor::getKernels() { return this->loopKernels; }
-
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   visitor.TraverseDecl(Context.getTranslationUnitDecl());
 
@@ -232,11 +230,11 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
     ComplexityKernelVisitor complexityVisitor(&Context);
     complexityVisitor.visit(visitor.root);
 
-    TextPrinter printer;
-    printer.gen_out(visitor.getKernels(), visitor.root, Context, this->outputFile);
+    TxtPrinter printer;
+    printer.gen_out(visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
-    DOTPrinter printer;
-    printer.gen_out(visitor.getKernels(), visitor.root, Context, this->outputFile);
+    DotPrinter printer;
+    printer.gen_out(visitor.root, Context, this->outputFile);
   }
 }
 
