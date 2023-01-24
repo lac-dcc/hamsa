@@ -29,7 +29,7 @@ std::string ComplexityKernelVisitor::visit(SeqKernel* kernel) {
 std::string ComplexityKernelVisitor::visit(CondKernel* kernel) {
   kernel->complexity = this->visit(kernel->thenChild);
 
-  if (kernel->elseChild != nullptr)
+  if (kernel->elseChild->children.size() > 0)
     kernel->complexity = "(" + kernel->complexity + " | " + this->visit(kernel->elseChild) + ")";
 
   return kernel->complexity;
@@ -64,7 +64,7 @@ std::string TxtKernelVisitor::visit(SeqKernel* kernel) {
 
 std::string TxtKernelVisitor::visit(CondKernel* kernel) {
   std::string out = "if " + Printer::getSourceCodeText(kernel->condition, *this->context) + "\n\t" + this->visit(kernel->thenChild);
-  if (kernel->elseChild != nullptr)
+  if (kernel->elseChild->children.size() > 0)
     out += "else\n\t" + this->visit(kernel->elseChild);
 
   return out;
