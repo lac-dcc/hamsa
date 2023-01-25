@@ -21,7 +21,7 @@ std::string Printer::getIncRepresentation(Expr* inc, ASTContext& Context) {
       return "-1";
   } else if (auto bOp = dyn_cast<BinaryOperator>(inc)) {
     if (bOp->getOpcodeStr() == "+=")
-      return Printer::getSourceCodeText(bOp->getRHS(), Context);
+      return "+" + Printer::getSourceCodeText(bOp->getRHS(), Context);
     else if (bOp->getOpcodeStr() == "-=")
       return "-" + Printer::getSourceCodeText(bOp->getRHS(), Context);
     else if (bOp->getOpcodeStr() == "*=")
