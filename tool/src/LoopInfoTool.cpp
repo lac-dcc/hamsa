@@ -132,6 +132,7 @@ void LoopInfoVisitor::handleForCond(Expr* cond, LoopKernel* kernel) {
 
   if (auto* bo = dyn_cast<BinaryOperator>(cond)) {
     kernel->limit = bo->getRHS();
+    kernel->limitOp = bo->getOpcodeStr().str();
 
     if (auto* condvarR = dyn_cast<VarDecl>(bo->getRHS()->getReferencedDeclOfCallee()))
       kernel->inputs.insert(condvarR);

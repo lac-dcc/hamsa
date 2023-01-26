@@ -60,6 +60,7 @@ public:
   clang::Expr* init;           ///< Induction variable's initial value.
   clang::Expr* limit;          ///< Induction variable's limit.
   clang::Expr* inc;            ///< Induction variable's increment at each iteration.
+  std::string limitOp;         ///< Limit operator.
 
   virtual std::string accept(KernelVisitor* visitor);
 };
