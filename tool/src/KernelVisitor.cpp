@@ -27,10 +27,12 @@ std::string ComplexityKernelVisitor::visit(SeqKernel* kernel) {
 }
 
 std::string ComplexityKernelVisitor::visit(CondKernel* kernel) {
-  kernel->complexity = this->visit(kernel->thenChild);
+  kernel->complexity = "(" + this->visit(kernel->thenChild) + " | ";
 
   if (kernel->elseChild->children.size() > 0)
-    kernel->complexity = "(" + kernel->complexity + " | " + this->visit(kernel->elseChild) + ")";
+    kernel->complexity += this->visit(kernel->elseChild) + ")";
+  else 
+    kernel->complexity += "1)";
 
   return kernel->complexity;
 }
