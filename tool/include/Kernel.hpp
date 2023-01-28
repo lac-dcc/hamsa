@@ -7,7 +7,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include <string>
 
-class KernelVisitor;
+template <class T> class KernelVisitor;
 
 /**
  * \class Kernel
@@ -26,7 +26,7 @@ public:
    * \brief Method that accepts the visit of a KernelVisitor. This is used for double dispatch.
    * \param visitor KernelVisitor instance that will apply the visit.
    */
-  virtual std::string accept(KernelVisitor* visitor) = 0;
+  virtual std::string accept(KernelVisitor<std::string>* visitor) = 0;
   virtual ~Kernel() = default;
 };
 
@@ -41,7 +41,7 @@ public:
   llvm::SmallSet<Kernel*, 3> children; ///< Set of child kernels
   Kernel* parent = nullptr;            ///< Parent kernel (if there is any).
 
-  virtual std::string accept(KernelVisitor* visitor);
+  virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
 
 /**
@@ -62,7 +62,7 @@ public:
   clang::Expr* inc;            ///< Induction variable's increment at each iteration.
   std::string limitOp;         ///< Limit operator.
 
-  virtual std::string accept(KernelVisitor* visitor);
+  virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
 
 /**
@@ -80,7 +80,7 @@ public:
   SeqKernel* thenChild;        ///< Child kernel for the "then" branch.
   SeqKernel* elseChild;        ///< Child kernel for the "else" branch.
 
-  virtual std::string accept(KernelVisitor* visitor);
+  virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
 
 #endif

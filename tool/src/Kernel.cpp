@@ -26,8 +26,8 @@ CondKernel::~CondKernel() {
   delete this->elseChild;
 }
 
-std::string LoopKernel::accept(KernelVisitor* visitor) { return visitor->visit(this); }
+std::string LoopKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }
 
-std::string SeqKernel::accept(KernelVisitor* visitor) { return visitor->visit(this); }
+std::string SeqKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }
 
-std::string CondKernel::accept(KernelVisitor* visitor) { return visitor->visit(this); }
+std::string CondKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }

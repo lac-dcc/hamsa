@@ -17,7 +17,7 @@ class CondKernel;
  * This class implements a recursive Kernel Visitor.
  * The main goal is traverse the kernels tree to do an action.
  */
-class KernelVisitor {
+template <class T> class KernelVisitor {
 public:
   clang::ASTContext* context; ///< Clang AST context.
 
@@ -25,19 +25,19 @@ public:
    * \brief Visit method to be applied to LoopKernel nodes.
    * \param kernel LoopKernel node being currently visited.
    */
-  virtual std::string visit(LoopKernel* kernel) = 0;
+  virtual T visit(LoopKernel* kernel) = 0;
 
   /**
    * \brief Visit method to be applied to SeqKernel nodes.
    * \param kernel ForStmt node being currently visited.
    */
-  virtual std::string visit(SeqKernel* kernel) = 0;
+  virtual T visit(SeqKernel* kernel) = 0;
 
   /**
    * \brief Visit method to be applied to CondKernel nodes.
    * \param kernel ForStmt node being currently visited.
    */
-  virtual std::string visit(CondKernel* kernel) = 0;
+  virtual T visit(CondKernel* kernel) = 0;
 
 protected:
   /**
@@ -55,13 +55,13 @@ protected:
  * This class implements a recursive Kernel Visitor.
  * The main goal is traverse the kernels tree to do extract the kernels complexity.
  */
-class ComplexityKernelVisitor : public KernelVisitor {
+class ComplexityKernelVisitor : public KernelVisitor<std::string> {
 public:
   /**
    * \brief ComplexityKernelVisitor constructor.
    * \param context Clang AST context.
    */
-  ComplexityKernelVisitor(clang::ASTContext* context) : KernelVisitor(context) {}
+  ComplexityKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
 
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
@@ -76,13 +76,13 @@ public:
  * This class implements a recursive Kernel Visitor.
  * The main goal is traverse the kernels tree to generate the .txt output.
  */
-class TxtKernelVisitor : public KernelVisitor {
+class TxtKernelVisitor : public KernelVisitor<std::string> {
 public:
   /**
    * \brief TxtKernelVisitor constructor.
    * \param context Clang AST context.
    */
-  TxtKernelVisitor(clang::ASTContext* context) : KernelVisitor(context) {}
+  TxtKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
 
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
@@ -97,13 +97,13 @@ public:
  * This class implements a recursive Kernel Visitor.
  * The main goal is traverse the kernels tree to generate the .dot output.
  */
-class DotKernelVisitor : public KernelVisitor {
+class DotKernelVisitor : public KernelVisitor<std::string> {
 public:
   /**
    * \brief DotKernelVisitor constructor.
    * \param context Clang AST context.
    */
-  DotKernelVisitor(clang::ASTContext* context) : KernelVisitor(context) {}
+  DotKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
 
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
