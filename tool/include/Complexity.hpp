@@ -2,7 +2,6 @@
 #define HAMSA_COMPLEXITY
 
 #include "Kernel.hpp"
-#include "llvm/ADT/DenseMap.h"
 #include "clang/AST/ASTContext.h"
 
 /**

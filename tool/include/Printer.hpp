@@ -4,9 +4,6 @@
 #include "Complexity.hpp"
 #include "Kernel.hpp"
 #include "clang/AST/ASTContext.h"
-#include "clang/Basic/LangOptions.h"
-#include "clang/Basic/SourceManager.h"
-#include "llvm/ADT/DenseMap.h"
 #include <string>
 
 /**

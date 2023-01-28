@@ -1,7 +1,5 @@
 #include "Complexity.hpp"
 #include "Printer.hpp"
-#include "llvm/Support/raw_ostream.h"
-#include <locale>
 
 using namespace llvm;
 using namespace clang;
@@ -38,7 +36,7 @@ std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
     if (kernel->limitOp == ">" || kernel->limitOp == ">=") {
       // (int i = n; i > 0; i--)
       if (inc[0] == '-')
-        return "("+ init + ")";
+        return "(" + init + ")";
       // (int i = n; i > 0; i /= 2)
       if (inc[0] == '*')
         return "log(" + limit + ")";

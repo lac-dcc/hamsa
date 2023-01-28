@@ -1,6 +1,7 @@
 #include "KernelVisitor.hpp"
-#include "Printer.hpp"
 #include "Complexity.hpp"
+#include "Printer.hpp"
+#include "clang/Basic/SourceManager.h"
 
 using namespace clang;
 
@@ -31,7 +32,7 @@ std::string ComplexityKernelVisitor::visit(CondKernel* kernel) {
 
   if (kernel->elseChild->children.size() > 0)
     kernel->complexity += this->visit(kernel->elseChild) + ")";
-  else 
+  else
     kernel->complexity += "1)";
 
   return kernel->complexity;
@@ -65,7 +66,8 @@ std::string TxtKernelVisitor::visit(SeqKernel* kernel) {
 }
 
 std::string TxtKernelVisitor::visit(CondKernel* kernel) {
-  std::string out = "if " + Printer::getSourceCodeText(kernel->condition, *this->context) + "\n\t" + this->visit(kernel->thenChild);
+  std::string out =
+      "if " + Printer::getSourceCodeText(kernel->condition, *this->context) + "\n\t" + this->visit(kernel->thenChild);
   if (kernel->elseChild->children.size() > 0)
     out += "else\n\t" + this->visit(kernel->elseChild);
 
@@ -80,9 +82,10 @@ std::string DotKernelVisitor::visit(LoopKernel* kernel) {
   if (kernel->child->children.size() > 0)
     link += identifier + " -> " + std::to_string(kernel->child->id) + "\n" + this->visit(kernel->child);
 
-  label += identifier + "[label=\"" + kernel->induc->getNameAsString() + ", <" + Printer::getSourceCodeText(kernel->init, *this->context) +
-             ", " + Printer::getSourceCodeText(kernel->limit, *this->context) + ", " +
-             Printer::getIncRepresentation(kernel->inc, *this->context) + ">\"]\n";
+  label += identifier + "[label=\"" + kernel->induc->getNameAsString() + ", <" +
+           Printer::getSourceCodeText(kernel->init, *this->context) + ", " +
+           Printer::getSourceCodeText(kernel->limit, *this->context) + ", " +
+           Printer::getIncRepresentation(kernel->inc, *this->context) + ">\"]\n";
   return link + label;
 }
 
@@ -99,7 +102,8 @@ std::string DotKernelVisitor::visit(SeqKernel* kernel) {
 
 std::string DotKernelVisitor::visit(CondKernel* kernel) {
   std::string links = "";
-  std::string label = std::to_string(kernel->id) + "[shape=diamond, label=\"" + Printer::getSourceCodeText(kernel->condition, *this->context) + "\"]\n";
+  std::string label = std::to_string(kernel->id) + "[shape=diamond, label=\"" +
+                      Printer::getSourceCodeText(kernel->condition, *this->context) + "\"]\n";
   links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" +
            this->visit(kernel->thenChild);
   if (kernel->elseChild->children.size() > 0)

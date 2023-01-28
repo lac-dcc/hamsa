@@ -1,7 +1,5 @@
 #include "Kernel.hpp"
 #include "KernelVisitor.hpp"
-#include "Printer.hpp"
-#include <locale>
 
 using namespace clang;
 
