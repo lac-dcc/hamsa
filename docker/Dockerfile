@@ -12,7 +12,7 @@ RUN apt-get update -y && apt-get install -y locales curl wget tar sudo git apt-u
 ENV LANG en_US.utf8
 
 ############################################# DEPENDENCIES ##############################################
-RUN apt-get install -y gcc g++ ninja-build libgraphviz-dev vim python3 python3-pip python3-dev automake make \
+RUN apt-get install -y gcc g++ ninja-build graphviz vim python3 python3-pip python3-dev automake make \
     build-essential 
 
 ############################################# CMAKE #####################################################
