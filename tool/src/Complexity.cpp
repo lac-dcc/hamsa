@@ -10,6 +10,12 @@ bool isNumber(Expr* expr) {
   return false;
 }
 
+bool isSingleVar(Expr* expr) {
+  if (auto ref = dyn_cast<DeclRefExpr>(expr->IgnoreCasts()))
+    return true;
+  return false;
+}
+
 std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
   std::string init = Printer::getSourceCodeText(kernel->init, context);
   std::string limit = Printer::getSourceCodeText(kernel->limit, context);
@@ -27,7 +33,7 @@ std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
     if (kernel->limitOp == "<" || kernel->limitOp == "<=") {
       // (int i = 0; i < n; i++)
       if (inc[0] == '+')
-        return "(" + limit + ")";
+        return isSingleVar(kernel->limit) ? limit : "(" + limit + ")";
       // (int i = 0; i < n; i *= 2)
       if (inc[0] == '*')
         return "log(" + limit + ")";
@@ -36,10 +42,21 @@ std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
     if (kernel->limitOp == ">" || kernel->limitOp == ">=") {
       // (int i = n; i > 0; i--)
       if (inc[0] == '-')
-        return "(" + init + ")";
+        return isSingleVar(kernel->limit) ? limit : "(" + limit + ")";
       // (int i = n; i > 0; i /= 2)
       if (inc[0] == '*')
         return "log(" + limit + ")";
+    }
+  } else if (!initIsNumber && !limitIsNumber) {
+    if (kernel->limitOp == "<" || kernel->limitOp == "<=") {
+      // (int i = n; i < m; i++)
+      if (inc[0] == '+') {
+        if (!isSingleVar(kernel->init))
+          init = "(" + init + ")";
+        if (!isSingleVar(kernel->limit))
+          limit = "(" + limit + ")";
+        return "((" + limit + "-" + init + ")" + "/" + inc.substr(1, inc.size()-1) + ")";
+      }
     }
   }
 
