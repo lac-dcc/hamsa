@@ -19,10 +19,10 @@ After configuring the build dir, you can setup the tool by running this command:
 
 ## Running
 
-After you've built the tool, you can run it as a Clang plugin:
+After you've built the tool, you can run it as a Clang plugin. However the `tool/run.sh` script makes it easier to run. You can use it like this:
 
-    clang++ -cc1 -load ./build/src/libLoopInfoTool.so -plugin hamsa inputFile.cpp
+    ./run.sh inputFile outputFile outputFormat
 
 ## Setup tutorial
 
-You can also watch our [tutorial video](https://youtu.be/Vu9EpnKtjGU) about how to use the tool and run it inside a docker container. 
+You can also watch our [tutorial video](https://youtu.be/Vu9EpnKtjGU) about how to setup the tool and run it inside a Docker container.
