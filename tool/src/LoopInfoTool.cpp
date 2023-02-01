@@ -144,6 +144,8 @@ void LoopInfoVisitor::handleForInc(Expr* inc, LoopKernel* kernel) {
   if (!inc)
     return;
 
+  this->traverseExpr(inc, kernel);
+
   kernel->inc = inc;
 }
 
