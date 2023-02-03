@@ -109,13 +109,6 @@ private:
    * \param kernel Kernel being visited.
    */
   void handleForBody(clang::Stmt* body, LoopKernel* kernel);
-
-  /**
-   * \brief Auxiliary method used to handle the body of the If Stmt.
-   * \param body Statement that represents the if's body.
-   * \param kernel Kernel being visited.
-   */
-  void handleIfBody(clang::Stmt* body, CondKernel* kernel);
 };
 
 /**

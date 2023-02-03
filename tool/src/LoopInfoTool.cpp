@@ -190,8 +190,6 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
   return true;
 }
 
-void LoopInfoVisitor::handleIfBody(clang::Stmt* body, CondKernel* kernel) {}
-
 void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, int64_t& ifstmtId, CondKernel*& cond, bool isElse) {
   for (auto* child : node->children()) {
     if (!child)
