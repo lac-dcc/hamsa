@@ -2,5 +2,6 @@
 build/
 results/
 tool/output/
+test/tensilica/
 log.txt
 temp.*
