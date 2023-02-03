@@ -5,60 +5,40 @@ using namespace llvm;
 using namespace clang;
 
 bool isNumber(Expr* expr) {
-  if (auto num = dyn_cast<IntegerLiteral>(expr->IgnoreCasts()))
+  if (auto num = dyn_cast<IntegerLiteral>(expr->IgnoreCasts())) {
     return true;
-  return false;
-}
-
-bool isSingleVar(Expr* expr) {
-  if (auto ref = dyn_cast<DeclRefExpr>(expr->IgnoreCasts()))
-    return true;
+  }
   return false;
 }
 
 std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
+  // (limit + inc - init - 1) / inc 
+  // ou (|limit + inc - init| - 1) / |inc|
+
   std::string init = Printer::getSourceCodeText(kernel->init, context);
   std::string limit = Printer::getSourceCodeText(kernel->limit, context);
   std::string inc = Printer::getIncRepresentation(kernel->inc, context);
-
+  char incSignal = inc[0];
+  inc = inc.substr(1, inc.size() - 1);
   bool initIsNumber = isNumber(kernel->init);
   bool limitIsNumber = isNumber(kernel->limit);
+  std::string iterations = "(";
 
-  if (initIsNumber && limitIsNumber) {
-    // (int i = 0; i < 10; i++) || (int i = 10; i > 0; i--)
-    if (((kernel->limitOp == "<" || kernel->limitOp == "<=") && inc[0] == '+') ||
-        ((kernel->limitOp == ">" || kernel->limitOp == ">=") && inc[0] == '-'))
-      return "1";
-  } else if (initIsNumber && !limitIsNumber) {
-    if (kernel->limitOp == "<" || kernel->limitOp == "<=") {
-      // (int i = 0; i < n; i++)
-      if (inc[0] == '+')
-        return isSingleVar(kernel->limit) ? limit : "(" + limit + ")";
-      // (int i = 0; i < n; i *= 2)
-      if (inc[0] == '*')
-        return "log(" + limit + ")";
-    }
-  } else if (!initIsNumber && limitIsNumber) {
-    if (kernel->limitOp == ">" || kernel->limitOp == ">=") {
-      // (int i = n; i > 0; i--)
-      if (inc[0] == '-')
-        return isSingleVar(kernel->limit) ? limit : "(" + limit + ")";
-      // (int i = n; i > 0; i /= 2)
-      if (inc[0] == '*')
-        return "log(" + limit + ")";
-    }
-  } else if (!initIsNumber && !limitIsNumber) {
-    if (kernel->limitOp == "<" || kernel->limitOp == "<=") {
-      // (int i = n; i < m; i++)
-      if (inc[0] == '+') {
-        if (!isSingleVar(kernel->init))
-          init = "(" + init + ")";
-        if (!isSingleVar(kernel->limit))
-          limit = "(" + limit + ")";
-        return "((" + limit + "-" + init + ")" + "/" + inc.substr(1, inc.size()-1) + ")";
-      }
-    }
-  }
+  if (!limitIsNumber || (limitIsNumber && limit != "0"))
+    iterations += limit + " ";
+  iterations += incSignal;
+  iterations += " " + inc;
+  if (!initIsNumber || (initIsNumber && init != "0"))
+    iterations += " - " + init;
 
-  return "unknown construction: " + kernel->induc->getNameAsString() + ", <" + init + ", " + limit + ", " + inc + ">";
+  if(kernel->limitOp == "<")
+    iterations += " - 1";
+  if(kernel->limitOp == ">")
+    iterations += " + 1";
+    
+  if (incSignal == '-')
+    iterations += ") // (-" + inc + ")";
+  else
+    iterations += ") // " + inc;
+  return " (" + iterations + ")";
 }
