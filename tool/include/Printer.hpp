@@ -55,4 +55,14 @@ class DotPrinter : public Printer {
 public:
   virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
 };
+
+/**
+ * \class PerfModelPrinter
+ *
+ * \brief Concrete Printer class for a performance model function.
+ */
+class PerfModelPrinter : public Printer {
+public:
+  virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
+};
 #endif

@@ -235,6 +235,10 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
     DotPrinter printer;
     printer.gen_out(visitor.root, Context, this->outputFile);
+  } else if (this->outputFormat == "perfModel") {
+    outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
+    PerfModelPrinter printer;
+    printer.gen_out(visitor.root, Context, this->outputFile);
   }
 }
 

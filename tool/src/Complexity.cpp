@@ -40,5 +40,5 @@ std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
     iterations += ") // (-" + inc + ")";
   else
     iterations += ") // " + inc;
-  return " (" + iterations + ")";
+  return "(" + iterations + ")";
 }

@@ -110,4 +110,27 @@ public:
   virtual std::string visit(CondKernel* kernel);
 };
 
+/**
+ * \class PerfModelKernelVisitor
+ *
+ * \brief Implementation of a Visitor that traverses the Kernels tree.
+ *
+ * This class implements a recursive Kernel Visitor.
+ * The main goal is traverse the kernels tree to generate the perfModel output.
+ */
+class PerfModelKernelVisitor : public KernelVisitor<std::string> {
+public:
+  /**
+   * \brief PerfModelKernelVisitor constructor.
+   * \param context Clang AST context.
+   */
+  PerfModelKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
+
+  bool closedBrackets = false;
+
+  virtual std::string visit(LoopKernel* kernel);
+  virtual std::string visit(SeqKernel* kernel);
+  virtual std::string visit(CondKernel* kernel);
+};
+
 #endif

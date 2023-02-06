@@ -111,3 +111,32 @@ std::string DotKernelVisitor::visit(CondKernel* kernel) {
              this->visit(kernel->elseChild);
   return label + links;
 }
+
+std::string PerfModelKernelVisitor::visit(SeqKernel* kernel) {
+  if (kernel->children.size() == 1) {
+    return (*kernel->children.begin())->accept(this);
+  } else if (kernel->children.size() > 1) {
+    std::string out = "";
+    if (!this->closedBrackets) {
+      out += ']';
+      this->closedBrackets = true;
+    }
+
+    out += ", TPSeq(";
+    for(auto child : kernel->children) {
+      out += child->accept(this) + ',';
+    }
+    out += ')';
+    return out;
+  }
+
+  return "";
+}
+
+std::string PerfModelKernelVisitor::visit(LoopKernel* kernel) {
+  return calculateSingleCost(kernel, *this->context) + ',' + this->visit(kernel->child);
+}
+
+std::string PerfModelKernelVisitor::visit(CondKernel* kernel) {
+  return "";
+}
