@@ -98,13 +98,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
         kernel->induc = initVar;
 
       kernel->init = assign->getRHS();
-
-      // Initialization with RHS as another variable
-      if (auto* initDeclRef = dyn_cast<VarDecl>(assign->getRHS()->getReferencedDeclOfCallee()))
-        kernel->inputs.insert(initDeclRef);
-      // Initialization with RHS as an expression
-      else if (auto* initExpr = dyn_cast<Expr>(assign->getRHS()))
-        this->traverseExpr(initExpr, kernel);
+      this->traverseExpr(assign->getRHS(), kernel);
     }
   }
   // Initialization with a var declaration
@@ -114,13 +108,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
       this->bodyDeclarations[valDecl] = valDecl->getNameAsString();
 
       kernel->init = valDecl->getInit();
-
-      // Initialization as another variable
-      if (auto* varDeclRef = dyn_cast<VarDecl>(valDecl->getInit()->IgnoreImpCasts()->getReferencedDeclOfCallee()))
-        kernel->inputs.insert(varDeclRef);
-      // Initialization as an expression
-      else if (auto* varDeclExpr = dyn_cast<Expr>(valDecl->getInit()))
-        this->traverseExpr(varDeclExpr, kernel);
+      this->traverseExpr(valDecl->getInit(), kernel);
     }
   }
 }
@@ -132,11 +120,7 @@ void LoopInfoVisitor::handleForCond(Expr* cond, LoopKernel* kernel) {
   if (auto* bo = dyn_cast<BinaryOperator>(cond)) {
     kernel->limit = bo->getRHS();
     kernel->limitOp = bo->getOpcodeStr().str();
-
-    if (auto* condvarR = dyn_cast<VarDecl>(bo->getRHS()->getReferencedDeclOfCallee()))
-      kernel->inputs.insert(condvarR);
-    else if (auto* condvalR = dyn_cast<Expr>(bo->getRHS()))
-      this->traverseExpr(condvalR, kernel);
+    this->traverseExpr(bo->getRHS(), kernel);
   }
 }
 
@@ -144,9 +128,8 @@ void LoopInfoVisitor::handleForInc(Expr* inc, LoopKernel* kernel) {
   if (!inc)
     return;
 
-  this->traverseExpr(inc, kernel);
-
   kernel->inc = inc;
+  this->traverseExpr(inc, kernel);
 }
 
 void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
