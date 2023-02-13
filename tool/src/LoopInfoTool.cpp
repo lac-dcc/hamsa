@@ -142,30 +142,32 @@ void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
 
 bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
   auto id = ifstmt->getID(*this->context);
-  CondKernel* cond = nullptr;
+
+  CondKernel* cond = new CondKernel(id, ifstmt->hasElseStorage());
+  if (this->ifStmtParents.find(id) != this->ifStmtParents.end()) {
+    cond->parent = this->ifStmtParents[id];
+  } else {
+    cond->parent = this->root;
+  }
 
   auto thenBody = ifstmt->getThen();
-  this->traverseIfBody(thenBody, id, cond);
+  this->traverseIfBody(thenBody, cond);
 
-  if (cond != nullptr) {
-    for (auto child : thenBody->children()) {
-      if (auto foundIf = dyn_cast<IfStmt>(child))
-        this->ifStmtParents[foundIf->getID(*this->context)] = cond->thenChild;
-    }
+  for (auto child : thenBody->children()) {
+    if (auto foundIf = dyn_cast<IfStmt>(child))
+      this->ifStmtParents[foundIf->getID(*this->context)] = cond->thenChild;
   }
 
   if (ifstmt->hasElseStorage()) {
     auto elseBody = ifstmt->getElse();
-    this->traverseIfBody(elseBody, id, cond, true);
-    if (cond != nullptr) {
-      for (auto child : elseBody->children()) {
-        if (auto foundIf = dyn_cast<IfStmt>(child))
-          this->ifStmtParents[foundIf->getID(*this->context)] = cond->elseChild;
-      }
+    this->traverseIfBody(elseBody, cond, true);
+    for (auto child : elseBody->children()) {
+      if (auto foundIf = dyn_cast<IfStmt>(child))
+        this->ifStmtParents[foundIf->getID(*this->context)] = cond->elseChild;
     }
   }
 
-  if (cond != nullptr && cond->parent != nullptr) {
+  if (cond->parent != nullptr) {
     cond->parent->children.insert(cond);
     cond->condition = ifstmt->getCond();
   }
@@ -173,20 +175,12 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
   return true;
 }
 
-void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, int64_t& ifstmtId, CondKernel*& cond, bool isElse) {
+void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
 
     if (auto forStmt = dyn_cast<ForStmt>(child)) {
-      if (cond == nullptr) {
-        cond = new CondKernel(ifstmtId);
-        if (this->ifStmtParents.find(ifstmtId) != this->ifStmtParents.end()) {
-          cond->parent = this->ifStmtParents[ifstmtId];
-        } else {
-          cond->parent = this->root;
-        }
-      }
       auto id = forStmt->getID(*this->context);
       LoopKernel* loop;
       if (this->loopKernels.find(id) != this->loopKernels.end()) {
@@ -196,13 +190,14 @@ void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, int64_t& ifstmtId, CondK
         this->loopKernels[id] = loop;
       }
 
-      if (isElse) {
-        loop->parent = cond->elseChild;
-      } else {
+      if (!isElse) {
         loop->parent = cond->thenChild;
+      } else {
+        loop->parent = cond->elseChild;
       }
     }
-    this->traverseIfBody(child, ifstmtId, cond, isElse);
+
+    this->traverseIfBody(child, cond, isElse);
   }
 }
 

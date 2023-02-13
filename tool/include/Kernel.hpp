@@ -72,7 +72,7 @@ public:
  */
 class CondKernel : public Kernel {
 public:
-  CondKernel(int64_t id);
+  CondKernel(int64_t id, bool hasElse);
   ~CondKernel();
 
   clang::Expr* condition;      ///< Condition of the if statement.

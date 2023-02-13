@@ -73,7 +73,7 @@ private:
    * \param node Root of the subtree.
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    */
-  void traverseIfBody(clang::Stmt* node, int64_t& ifstmtId, CondKernel*& cond, bool isElse = false);
+  void traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse = false);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.

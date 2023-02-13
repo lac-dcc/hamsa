@@ -30,7 +30,7 @@ std::string ComplexityKernelVisitor::visit(SeqKernel* kernel) {
 std::string ComplexityKernelVisitor::visit(CondKernel* kernel) {
   kernel->complexity = "(" + this->visit(kernel->thenChild) + " | ";
 
-  if (kernel->elseChild->children.size() > 0)
+  if (kernel->elseChild != nullptr && kernel->elseChild->children.size() > 0)
     kernel->complexity += this->visit(kernel->elseChild) + ")";
   else
     kernel->complexity += "1)";
@@ -68,7 +68,7 @@ std::string TxtKernelVisitor::visit(SeqKernel* kernel) {
 std::string TxtKernelVisitor::visit(CondKernel* kernel) {
   std::string out =
       "if " + Printer::getSourceCodeText(kernel->condition, *this->context) + "\n\t" + this->visit(kernel->thenChild);
-  if (kernel->elseChild->children.size() > 0)
+  if (kernel->elseChild != nullptr && kernel->elseChild->children.size() > 0)
     out += "else\n\t" + this->visit(kernel->elseChild);
 
   return out;
@@ -104,11 +104,15 @@ std::string DotKernelVisitor::visit(CondKernel* kernel) {
   std::string links = "";
   std::string label = std::to_string(kernel->id) + "[shape=diamond, label=\"" +
                       Printer::getSourceCodeText(kernel->condition, *this->context) + "\"]\n";
-  links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" +
-           this->visit(kernel->thenChild);
-  if (kernel->elseChild->children.size() > 0)
+  
+  if (kernel->thenChild->children.size() > 0) {
+    links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" +
+            this->visit(kernel->thenChild);
+  }
+  if (kernel->elseChild != nullptr && kernel->elseChild->children.size() > 0) {
     links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->elseChild->id) + "\n" +
              this->visit(kernel->elseChild);
+  }
   return label + links;
 }
 

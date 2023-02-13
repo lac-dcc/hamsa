@@ -11,17 +11,22 @@ LoopKernel::LoopKernel(int64_t id) {
 
 LoopKernel::~LoopKernel() { delete this->child; }
 
-CondKernel::CondKernel(int64_t id) {
-  this->thenChild = new SeqKernel;
-  this->elseChild = new SeqKernel;
+CondKernel::CondKernel(int64_t id, bool hasElse) {
   this->id = id;
+  this->thenChild = new SeqKernel;
   this->thenChild->id = id + 1;
-  this->elseChild->id = id + 2;
+  if (hasElse) {
+    this->elseChild = new SeqKernel;
+    this->elseChild->id = id + 2;
+  } else {
+    this->elseChild = nullptr;
+  }
 }
 
 CondKernel::~CondKernel() {
   delete this->thenChild;
-  delete this->elseChild;
+  if (this->elseChild != nullptr)
+    delete this->elseChild;
 }
 
 std::string LoopKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }
