@@ -104,10 +104,10 @@ std::string DotKernelVisitor::visit(CondKernel* kernel) {
   std::string links = "";
   std::string label = std::to_string(kernel->id) + "[shape=diamond, label=\"" +
                       Printer::getSourceCodeText(kernel->condition, *this->context) + "\"]\n";
-  
+
   if (kernel->thenChild->children.size() > 0) {
     links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->thenChild->id) + "\n" +
-            this->visit(kernel->thenChild);
+             this->visit(kernel->thenChild);
   }
   if (kernel->elseChild != nullptr && kernel->elseChild->children.size() > 0) {
     links += std::to_string(kernel->id) + " -> " + std::to_string(kernel->elseChild->id) + "\n" +
@@ -121,26 +121,60 @@ std::string PerfModelKernelVisitor::visit(SeqKernel* kernel) {
     return (*kernel->children.begin())->accept(this);
   } else if (kernel->children.size() > 1) {
     std::string out = "";
-    if (!this->closedBrackets) {
-      out += ']';
-      this->closedBrackets = true;
-    }
 
-    out += ", TPSeq(";
-    for(auto child : kernel->children) {
-      out += child->accept(this) + ',';
+    if (!this->TPContext.empty() && this->TPContext.top() == TPLoops) {
+      out += "], ";
     }
-    out += ')';
-    return out;
+    this->TPContext.push(this->TPSeq);
+
+    out += "TPSeq(";
+    for (auto child : kernel->children) {
+      out += child->accept(this) + ",";
+    }
+    out.pop_back();
+
+    this->TPContext.pop();
+    return out + ")";
   }
 
   return "";
 }
 
 std::string PerfModelKernelVisitor::visit(LoopKernel* kernel) {
-  return calculateSingleCost(kernel, *this->context) + ',' + this->visit(kernel->child);
+  std::string out = "";
+  bool openParenthesis = false;
+  if (this->TPContext.empty() || this->TPContext.top() != this->TPLoops) {
+    out += "TPLoops([";
+    this->TPContext.push(this->TPLoops);
+    openParenthesis = true;
+  } else {
+    out += ',';
+  }
+
+  out += calculateSingleCost(kernel, *this->context);
+
+  if (kernel->child->children.size() == 0) {
+    out += ']';
+  } else {
+    out += this->visit(kernel->child);
+  }
+
+  if (openParenthesis) {
+    this->TPContext.pop();
+    out += ')';
+  }
+  return out;
 }
 
 std::string PerfModelKernelVisitor::visit(CondKernel* kernel) {
-  return "";
+  std::string out = "";
+  if (!this->TPContext.empty() && this->TPContext.top() == this->TPLoops) {
+    out += "], ";
+  }
+
+  this->TPContext.push(this->TPCond);
+  out += "TPCond(" + Printer::getSourceCodeText(kernel->condition, *this->context) + ")";
+  this->TPContext.pop();
+
+  return out;
 }

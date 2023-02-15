@@ -55,25 +55,6 @@ void PerfModelPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string
   outputFile.open("output/" + outName, std::fstream::out);
   outputFile << "def perfModel(self):\n";
   outputFile << "\treturn TreePerfModel(self._normalized_name(), ";
-
-  std::string buffer = "";
-  if (root->children.size() <= 1) {
-    outputFile << "TPLoops([";
-    buffer = (*root->children.begin())->accept(&visitor);
-    if (buffer[buffer.size() - 1] == ',')
-      buffer.pop_back();
-    outputFile << buffer;
-    if (!visitor.closedBrackets)
-      outputFile << ']';
-    outputFile << ')';
-  } else {
-    outputFile << "TPSeq(";
-    for(auto child : root->children) {
-      buffer += child->accept(&visitor) + ',';
-    }
-    buffer.pop_back();
-    outputFile << buffer << ')';
-  }
-
-  outputFile << ")\n";
+  outputFile << visitor.visit(root);
+  outputFile << ')';
 }

@@ -2,6 +2,7 @@
 #define KERNEL_VISITOR
 
 #include "clang/AST/ASTContext.h"
+#include <stack>
 #include <string>
 
 class Kernel;
@@ -119,14 +120,16 @@ public:
  * The main goal is traverse the kernels tree to generate the perfModel output.
  */
 class PerfModelKernelVisitor : public KernelVisitor<std::string> {
+private:
+  enum TPTypes { TPLoops, TPCond, TPSeq };
+  std::stack<TPTypes> TPContext;
+
 public:
   /**
    * \brief PerfModelKernelVisitor constructor.
    * \param context Clang AST context.
    */
   PerfModelKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
-
-  bool closedBrackets = false;
 
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
