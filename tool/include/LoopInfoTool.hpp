@@ -8,6 +8,8 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include <map>
+#include <string>
 
 /**
  * \class LoopInfoVisitor
@@ -20,7 +22,9 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
-  SeqKernel* root; ///< Kernels tree root.
+  std::unordered_map<std::string, std::string>
+      tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
+  SeqKernel* root;        ///< Kernels tree root.
 
   /**
    * \brief Constructor method.
@@ -58,7 +62,6 @@ private:
   llvm::SmallSet<clang::ValueDecl*, 8> inputsBuffer; ///< Container used to store the for's inputs.
   llvm::DenseMap<clang::ValueDecl*, std::string>
       bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
-
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
    *        loops in a loop's body.

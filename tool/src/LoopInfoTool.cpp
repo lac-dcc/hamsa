@@ -1,5 +1,5 @@
-#include "LoopInfoTool.hpp"
 #include "KernelVisitor.hpp"
+#include "LoopInfoTool.hpp"
 #include "Printer.hpp"
 
 using namespace clang;
@@ -79,8 +79,29 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
       continue;
 
     if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
-      if (!ref->getDecl()->isFunctionOrFunctionTemplate())
+      if (!ref->getDecl()->isFunctionOrFunctionTemplate()) {
+
         kernel->inputs.insert(ref->getDecl());
+
+        if (auto* varDecl = dyn_cast<VarDecl>(ref->getDecl())) {
+          if (varDecl->getInit()) {
+            if (auto* call = dyn_cast<CallExpr>(varDecl->getInit())) {
+              std::string funcName = call->getDirectCallee()->getNameInfo().getAsString();
+              char dimNum = funcName[funcName.size() - 1];
+              funcName.pop_back();
+              if (funcName == "XAI_TILE3D_GET_DIM") {
+                std::string argName = "";
+                if (auto* arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts())) {
+                  argName = arg->getNameInfo().getAsString();
+                }
+                std::string varName = varDecl->getNameAsString();
+                argName.push_back(dimNum);
+                this->tensilicaVariables[varName] = argName;
+              }
+            }
+          }
+        }
+      }
     }
 
     this->traverseExpr(child, kernel);
@@ -215,7 +236,7 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
     printer.gen_out(visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "perfModel") {
     outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
-    PerfModelPrinter printer;
+    PerfModelPrinter printer(&visitor.tensilicaVariables);
     printer.gen_out(visitor.root, Context, this->outputFile);
   }
 }

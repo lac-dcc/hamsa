@@ -62,7 +62,12 @@ public:
  * \brief Concrete Printer class for a performance model function.
  */
 class PerfModelPrinter : public Printer {
+private:
+  std::unordered_map<std::string, std::string>* tensilicaVariables;
+
 public:
+  PerfModelPrinter(std::unordered_map<std::string, std::string>* map) : tensilicaVariables(map) {}
+
   virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
 };
 #endif

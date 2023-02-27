@@ -1,10 +1,11 @@
-#include "Printer.hpp"
 #include "KernelVisitor.hpp"
+#include "Printer.hpp"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include <fstream>
+#include <string>
 
 using namespace llvm;
 using namespace clang;
@@ -54,6 +55,15 @@ void PerfModelPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string
   PerfModelKernelVisitor visitor(&Context);
   outputFile.open("output/" + outName, std::fstream::out);
   outputFile << "def perfModel(self):\n";
+  for (auto& [var, value] : *this->tensilicaVariables) {
+    int dimIndex = std::atoi(&(value[value.size() - 1])) - 1;
+    value.pop_back();
+    if (value == "inTile") {
+      outputFile << "\t" << var << " = self.io.input[0].dims[" << dimIndex << "].dim\n";
+    } else if (value == "outTile") {
+      outputFile << "\t" << var << " = self.io.output[0].dims[" << dimIndex << "].dim\n";
+    }
+  }
   outputFile << "\treturn TreePerfModel(self._normalized_name(), ";
   outputFile << visitor.visit(root);
   outputFile << ')';
