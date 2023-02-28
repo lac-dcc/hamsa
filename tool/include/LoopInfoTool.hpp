@@ -11,6 +11,12 @@
 #include <map>
 #include <string>
 
+struct TensilicaVar {
+  std::string name;
+  std::string origin;
+  int dimIndex = -1;
+};
+  
 /**
  * \class LoopInfoVisitor
  *
@@ -22,8 +28,7 @@
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
-  std::unordered_map<std::string, std::string>
-      tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
+  llvm::SmallVector<TensilicaVar, 4> tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
 
   /**

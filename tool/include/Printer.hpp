@@ -2,6 +2,7 @@
 #define PRINTER
 
 #include "Complexity.hpp"
+#include "LoopInfoTool.hpp"
 #include "Kernel.hpp"
 #include "clang/AST/ASTContext.h"
 #include <string>
@@ -63,10 +64,10 @@ public:
  */
 class PerfModelPrinter : public Printer {
 private:
-  std::unordered_map<std::string, std::string>* tensilicaVariables;
+  llvm::SmallVector<TensilicaVar, 4>* tensilicaVariables;
 
 public:
-  PerfModelPrinter(std::unordered_map<std::string, std::string>* map) : tensilicaVariables(map) {}
+  PerfModelPrinter(llvm::SmallVector<TensilicaVar, 4>* variables) : tensilicaVariables(variables) {}
 
   virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
 };

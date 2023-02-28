@@ -81,22 +81,27 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
     if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
       if (!ref->getDecl()->isFunctionOrFunctionTemplate()) {
 
-        kernel->inputs.insert(ref->getDecl());
+        bool hadInsertion = kernel->inputs.insert(ref->getDecl()).second;
 
-        if (auto* varDecl = dyn_cast<VarDecl>(ref->getDecl())) {
-          if (varDecl->getInit()) {
-            if (auto* call = dyn_cast<CallExpr>(varDecl->getInit())) {
-              std::string funcName = call->getDirectCallee()->getNameInfo().getAsString();
-              char dimNum = funcName[funcName.size() - 1];
-              funcName.pop_back();
-              if (funcName == "XAI_TILE3D_GET_DIM") {
-                std::string argName = "";
-                if (auto* arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts())) {
-                  argName = arg->getNameInfo().getAsString();
+        if (hadInsertion) {
+          if (auto* varDecl = dyn_cast<VarDecl>(ref->getDecl())) {
+            if (varDecl->getInit()) {
+              if (auto* call = dyn_cast<CallExpr>(varDecl->getInit())) {
+                std::string funcName = call->getDirectCallee()->getNameInfo().getAsString();
+                int dimNum = std::atoi(&funcName[funcName.size() - 1]) - 1;
+                funcName.pop_back();
+                if (funcName == "XAI_TILE3D_GET_DIM") {
+                  std::string argName = "";
+                  if (auto* arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts())) {
+                    argName = arg->getNameInfo().getAsString();
+                  }
+                  
+                  this->tensilicaVariables.push_back({varDecl->getNameAsString(), argName, dimNum});
                 }
-                std::string varName = varDecl->getNameAsString();
-                argName.push_back(dimNum);
-                this->tensilicaVariables[varName] = argName;
+              } else if (auto* initRef = dyn_cast<DeclRefExpr>(varDecl->getInit()->IgnoreImpCasts())) {
+                if (initRef->getNameInfo().getAsString() == "XCHAL_IVPN_SIMD_WIDTH") {
+                  this->tensilicaVariables.push_back({varDecl->getNameAsString(), "XCHAL_IVPN_SIMD_WIDTH"});
+                }
               }
             }
           }
