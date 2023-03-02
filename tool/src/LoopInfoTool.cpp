@@ -1,5 +1,5 @@
-#include "KernelVisitor.hpp"
 #include "LoopInfoTool.hpp"
+#include "KernelVisitor.hpp"
 #include "Printer.hpp"
 
 using namespace clang;
@@ -78,32 +78,27 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
     if (!child)
       continue;
 
-    if (auto* ref = dyn_cast<DeclRefExpr>(child)) {
-      if (!ref->getDecl()->isFunctionOrFunctionTemplate()) {
+    DeclRefExpr* ref;
+    if ((ref = dyn_cast<DeclRefExpr>(child)) && !ref->getDecl()->isFunctionOrFunctionTemplate()) {
+      bool hadInsertion = kernel->inputs.insert(ref->getDecl()).second;
 
-        bool hadInsertion = kernel->inputs.insert(ref->getDecl()).second;
+      VarDecl* varDecl;
+      if (hadInsertion && (varDecl = dyn_cast<VarDecl>(ref->getDecl()))) {
+        if (auto* initVal = varDecl->getInit()) {
+          if (auto* call = dyn_cast<CallExpr>(initVal)) {
+            std::string funcName = call->getDirectCallee()->getNameInfo().getAsString();
+            int dimNum = std::atoi(&funcName[funcName.size() - 1]) - 1;
+            funcName.pop_back();
 
-        if (hadInsertion) {
-          if (auto* varDecl = dyn_cast<VarDecl>(ref->getDecl())) {
-            if (varDecl->getInit()) {
-              if (auto* call = dyn_cast<CallExpr>(varDecl->getInit())) {
-                std::string funcName = call->getDirectCallee()->getNameInfo().getAsString();
-                int dimNum = std::atoi(&funcName[funcName.size() - 1]) - 1;
-                funcName.pop_back();
-                if (funcName == "XAI_TILE3D_GET_DIM") {
-                  std::string argName = "";
-                  if (auto* arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts())) {
-                    argName = arg->getNameInfo().getAsString();
-                  }
-                  
-                  this->tensilicaVariables.push_back({varDecl->getNameAsString(), argName, dimNum});
-                }
-              } else if (auto* initRef = dyn_cast<DeclRefExpr>(varDecl->getInit()->IgnoreImpCasts())) {
-                if (initRef->getNameInfo().getAsString() == "XCHAL_IVPN_SIMD_WIDTH") {
-                  this->tensilicaVariables.push_back({varDecl->getNameAsString(), "XCHAL_IVPN_SIMD_WIDTH"});
-                }
-              }
+            DeclRefExpr* arg;
+            if (funcName == "XAI_TILE3D_GET_DIM" &&
+                (arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts()))) {
+              this->tensilicaVariables.push_back(
+                  {varDecl->getNameAsString(), arg->getNameInfo().getAsString(), dimNum});
             }
+          } else if (auto* initRef = dyn_cast<DeclRefExpr>(initVal->IgnoreImpCasts())) {
+            if (initRef->getNameInfo().getAsString() == "XCHAL_IVPN_SIMD_WIDTH")
+              this->tensilicaVariables.push_back({varDecl->getNameAsString(), "XCHAL_IVPN_SIMD_WIDTH"});
           }
         }
       }
@@ -118,14 +113,13 @@ void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
     return;
 
   // Initialization as assignment expression
-  if (auto* assign = dyn_cast<BinaryOperator>(init)) {
-    if (assign->isAssignmentOp()) {
-      if (auto* initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
-        kernel->induc = initVar;
+  BinaryOperator* assign;
+  if ((assign = dyn_cast<BinaryOperator>(init)) && assign->isAssignmentOp()) {
+    if (auto* initVar = dyn_cast<VarDecl>(assign->getLHS()->getReferencedDeclOfCallee()))
+      kernel->induc = initVar;
 
-      kernel->init = assign->getRHS();
-      this->traverseExpr(assign->getRHS(), kernel);
-    }
+    kernel->init = assign->getRHS();
+    this->traverseExpr(assign->getRHS(), kernel);
   }
   // Initialization with a var declaration
   else if (auto* varDeclStmt = dyn_cast<DeclStmt>(init)) {
@@ -176,19 +170,19 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
     cond->parent = this->root;
   }
 
-  auto thenBody = ifstmt->getThen();
+  auto* thenBody = ifstmt->getThen();
   this->traverseIfBody(thenBody, cond);
 
-  for (auto child : thenBody->children()) {
-    if (auto foundIf = dyn_cast<IfStmt>(child))
+  for (auto* child : thenBody->children()) {
+    if (auto* foundIf = dyn_cast<IfStmt>(child))
       this->ifStmtParents[foundIf->getID(*this->context)] = cond->thenChild;
   }
 
   if (ifstmt->hasElseStorage()) {
-    auto elseBody = ifstmt->getElse();
+    auto* elseBody = ifstmt->getElse();
     this->traverseIfBody(elseBody, cond, true);
-    for (auto child : elseBody->children()) {
-      if (auto foundIf = dyn_cast<IfStmt>(child))
+    for (auto* child : elseBody->children()) {
+      if (auto* foundIf = dyn_cast<IfStmt>(child))
         this->ifStmtParents[foundIf->getID(*this->context)] = cond->elseChild;
     }
   }
@@ -206,7 +200,7 @@ void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool 
     if (!child)
       continue;
 
-    if (auto forStmt = dyn_cast<ForStmt>(child)) {
+    if (auto* forStmt = dyn_cast<ForStmt>(child)) {
       auto id = forStmt->getID(*this->context);
       LoopKernel* loop;
       if (this->loopKernels.find(id) != this->loopKernels.end()) {

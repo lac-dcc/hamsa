@@ -122,7 +122,7 @@ std::string PerfModelKernelVisitor::visit(SeqKernel* kernel) {
   } else if (kernel->children.size() > 1) {
     std::string out = "";
 
-    if (!this->TPContext.empty() && this->TPContext.top() == TPLoops) {
+    if (!this->TPContext.empty() && this->TPContext.top() == this->TPLoops) {
       out += "], ";
     }
     this->TPContext.push(this->TPSeq);

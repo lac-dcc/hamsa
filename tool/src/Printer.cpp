@@ -17,19 +17,20 @@ std::string Printer::getSourceCodeText(Expr* expr, ASTContext& Context) {
 }
 
 std::string Printer::getIncRepresentation(Expr* inc, ASTContext& Context) {
-  if (auto uOp = dyn_cast<UnaryOperator>(inc)) {
+  if (auto* uOp = dyn_cast<UnaryOperator>(inc)) {
     if (uOp->isIncrementOp())
       return "+1";
     if (uOp->isDecrementOp())
       return "-1";
-  } else if (auto bOp = dyn_cast<BinaryOperator>(inc)) {
-    if (bOp->getOpcodeStr() == "+=")
+  } else if (auto* bOp = dyn_cast<BinaryOperator>(inc)) {
+    auto opCode = bOp->getOpcodeStr();
+    if (opCode == "+=")
       return "+" + Printer::getSourceCodeText(bOp->getRHS(), Context);
-    else if (bOp->getOpcodeStr() == "-=")
+    else if (opCode == "-=")
       return "-" + Printer::getSourceCodeText(bOp->getRHS(), Context);
-    else if (bOp->getOpcodeStr() == "*=")
+    else if (opCode == "*=")
       return "*" + Printer::getSourceCodeText(bOp->getRHS(), Context);
-    else if (bOp->getOpcodeStr() == "/=")
+    else if (opCode == "/=")
       return "/" + Printer::getSourceCodeText(bOp->getRHS(), Context);
   }
 
@@ -55,7 +56,7 @@ void PerfModelPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string
   PerfModelKernelVisitor visitor(&Context);
   outputFile.open("output/" + outName, std::fstream::out);
   outputFile << "def perfModel(self):\n";
-  for (auto var : *this->tensilicaVariables) {
+  for (const auto& var : *this->tensilicaVariables) {
     if (var.origin == "inTile") {
       outputFile << "\t" << var.name << " = self.io.input[0].dims[" << var.dimIndex << "].dim\n";
     } else if (var.origin == "outTile") {

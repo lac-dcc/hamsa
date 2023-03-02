@@ -4,24 +4,17 @@
 using namespace llvm;
 using namespace clang;
 
-bool isNumber(Expr* expr) {
-  if (auto num = dyn_cast<IntegerLiteral>(expr->IgnoreCasts())) {
-    return true;
-  }
-  return false;
-}
-
 std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
   // (limit + inc - init - 1) / inc 
-  // ou (|limit + inc - init| - 1) / |inc|
+  // (|limit + inc - init| - 1) / |inc|
 
   std::string init = Printer::getSourceCodeText(kernel->init, context);
   std::string limit = Printer::getSourceCodeText(kernel->limit, context);
   std::string inc = Printer::getIncRepresentation(kernel->inc, context);
   char incSignal = inc[0];
   inc = inc.substr(1, inc.size() - 1);
-  bool initIsNumber = isNumber(kernel->init);
-  bool limitIsNumber = isNumber(kernel->limit);
+  bool initIsNumber = isa<IntegerLiteral>(kernel->init->IgnoreCasts());
+  bool limitIsNumber = isa<IntegerLiteral>(kernel->limit->IgnoreImpCasts());
   std::string iterations = "(";
 
   if (!limitIsNumber || (limitIsNumber && limit != "0"))
