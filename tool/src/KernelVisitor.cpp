@@ -173,7 +173,29 @@ std::string PerfModelKernelVisitor::visit(CondKernel* kernel) {
   }
 
   this->TPContext.push(this->TPCond);
-  out += "TPCond(" + Printer::getSourceCodeText(kernel->condition, *this->context) + ")";
+  out += "TPCond(";
+
+  if (auto* binaryOp = dyn_cast<BinaryOperator>(kernel->condition)) {
+    switch (binaryOp->getOpcode()) {
+    case BinaryOperator::Opcode::BO_LT: 
+      out += "cneq(" + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + " % 2, 0)";
+      break;
+    case BinaryOperator::Opcode::BO_GT:
+      out += "cgreater(" + Printer::getSourceCodeText(binaryOp->getLHS(), *this->context) + ", " + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + ")";
+      break;
+    case BinaryOperator::Opcode::BO_EQ:
+      out += "ceq(" + Printer::getSourceCodeText(binaryOp->getLHS(), *this->context) + ", " + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + ")";
+      break;
+    case BinaryOperator::Opcode::BO_NE:
+      out += "cneq(" + Printer::getSourceCodeText(binaryOp->getLHS(), *this->context) + ", " + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + ")";
+      break;
+    default:
+      out += Printer::getSourceCodeText(binaryOp, *this->context);
+      break;
+    }
+  }
+  out += ")";
+
   this->TPContext.pop();
 
   return out;

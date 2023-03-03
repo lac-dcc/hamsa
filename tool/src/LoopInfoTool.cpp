@@ -81,6 +81,7 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
     DeclRefExpr* ref;
     if ((ref = dyn_cast<DeclRefExpr>(child)) && !ref->getDecl()->isFunctionOrFunctionTemplate()) {
       bool hadInsertion = kernel->inputs.insert(ref->getDecl()).second;
+      this->forVariables.insert(ref->getDecl());
 
       VarDecl* varDecl;
       if (hadInsertion && (varDecl = dyn_cast<VarDecl>(ref->getDecl()))) {
@@ -163,6 +164,9 @@ void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
 bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
   auto id = ifstmt->getID(*this->context);
 
+  if (!this->hasForVariable(ifstmt->getCond()))
+    return true;
+
   CondKernel* cond = new CondKernel(id, ifstmt->hasElseStorage());
   if (this->ifStmtParents.find(id) != this->ifStmtParents.end()) {
     cond->parent = this->ifStmtParents[id];
@@ -187,10 +191,8 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
     }
   }
 
-  if (cond->parent != nullptr) {
-    cond->parent->children.insert(cond);
-    cond->condition = ifstmt->getCond();
-  }
+  cond->parent->children.insert(cond);
+  cond->condition = ifstmt->getCond();
 
   return true;
 }
@@ -219,6 +221,20 @@ void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool 
 
     this->traverseIfBody(child, cond, isElse);
   }
+}
+
+bool LoopInfoVisitor::hasForVariable(Stmt* node) {
+  bool result = false;
+  for (auto* child : node->children()) {
+    DeclRefExpr* refExpr;
+    if ((refExpr = dyn_cast<DeclRefExpr>(child)) && this->forVariables.contains(refExpr->getDecl())) {
+      return true;
+    }
+
+    result = result || this->hasForVariable(child);
+  }
+
+  return result;
 }
 
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
