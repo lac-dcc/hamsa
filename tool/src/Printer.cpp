@@ -1,5 +1,5 @@
-#include "KernelVisitor.hpp"
 #include "Printer.hpp"
+#include "KernelVisitor.hpp"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
@@ -23,17 +23,19 @@ std::string Printer::getIncRepresentation(Expr* inc, ASTContext& Context) {
     if (uOp->isDecrementOp())
       return "-1";
   } else if (auto* bOp = dyn_cast<BinaryOperator>(inc)) {
-    auto opCode = bOp->getOpcodeStr();
-    if (opCode == "+=")
+    switch (bOp->getOpcode()) {
+    case BinaryOperator::Opcode::BO_AddAssign:
       return "+" + Printer::getSourceCodeText(bOp->getRHS(), Context);
-    else if (opCode == "-=")
+    case BinaryOperator::Opcode::BO_SubAssign:
       return "-" + Printer::getSourceCodeText(bOp->getRHS(), Context);
-    else if (opCode == "*=")
+    case BinaryOperator::Opcode::BO_MulAssign:
       return "*" + Printer::getSourceCodeText(bOp->getRHS(), Context);
-    else if (opCode == "/=")
+    case BinaryOperator::Opcode::BO_DivAssign:
       return "/" + Printer::getSourceCodeText(bOp->getRHS(), Context);
+    default:
+      break;
+    }
   }
-
   return Printer::getSourceCodeText(inc, Context);
 }
 
