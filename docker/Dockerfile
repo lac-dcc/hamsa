@@ -31,7 +31,7 @@ RUN cd $HOME && git clone -b llvmorg-14.0.0 https://github.com/llvm/llvm-project
     && ninja install
 
 ########################################### COPY HAMSA ##################################################
-RUN cd $HOME && git clone https://github.com/lac-dcc/hamsa 
+RUN cd $HOME && git clone -b perfModel https://github.com/lac-dcc/hamsa 
 
 ########################################### INSTALL TOOL ################################################
 RUN cd $HOME/hamsa/tool && ./setup.sh
