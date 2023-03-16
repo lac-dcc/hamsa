@@ -1,9 +1,31 @@
 #include "LoopInfoTool.hpp"
 #include "KernelVisitor.hpp"
 #include "Printer.hpp"
+#include <fstream>
 
 using namespace clang;
 using namespace llvm;
+
+bool KernelFunctionVisitor::VisitFunctionDecl(FunctionDecl* funcDecl) {
+  if (!funcDecl->isDefined())
+    return true;
+
+  this->loopVisitor->TraverseStmt(funcDecl->getBody());
+
+  this->kernelFunctions[funcDecl] = new TensilicaTree{this->loopVisitor->tensilicaVariables, this->loopVisitor->root};
+  this->loopVisitor->clearState();
+
+  return true;
+}
+
+void LoopInfoVisitor::clearState() {
+  this->root = new SeqKernel;
+  this->tensilicaVariables.clear();
+  this->loopKernels.clear();
+  this->ifStmtParents.clear();
+  this->forVariables.clear();
+  this->bodyDeclarations.clear();
+}
 
 bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   LoopKernel* kernel;
@@ -84,7 +106,8 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
       this->forVariables.insert(ref->getDecl());
 
       VarDecl* varDecl;
-      if (hadInsertion && (varDecl = dyn_cast<VarDecl>(ref->getDecl()))) {
+      if (hadInsertion && (varDecl = dyn_cast<VarDecl>(ref->getDecl())) &&
+          this->tensilicaVariables.find(varDecl->getNameAsString()) == this->tensilicaVariables.end()) {
         if (auto* initVal = varDecl->getInit()) {
           if (auto* call = dyn_cast<CallExpr>(initVal)) {
             std::string funcName = call->getDirectCallee()->getNameInfo().getAsString();
@@ -94,12 +117,11 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
             DeclRefExpr* arg;
             if (funcName == "XAI_TILE3D_GET_DIM" &&
                 (arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts()))) {
-              this->tensilicaVariables.push_back(
-                  {varDecl->getNameAsString(), arg->getNameInfo().getAsString(), dimNum});
+              this->tensilicaVariables[varDecl->getNameAsString()] = {arg->getNameInfo().getAsString(), dimNum};
             }
           } else if (auto* initRef = dyn_cast<DeclRefExpr>(initVal->IgnoreImpCasts())) {
             if (initRef->getNameInfo().getAsString() == "XCHAL_IVPN_SIMD_WIDTH")
-              this->tensilicaVariables.push_back({varDecl->getNameAsString(), "XCHAL_IVPN_SIMD_WIDTH"});
+              this->tensilicaVariables[varDecl->getNameAsString()] = {"XCHAL_IVPN_SIMD_WIDTH"};
           }
         }
       }
@@ -238,21 +260,30 @@ bool LoopInfoVisitor::hasForVariable(Stmt* node) {
 }
 
 void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
-  visitor.TraverseDecl(Context.getTranslationUnitDecl());
-
   if (this->outputFormat == "txt" || this->outputFormat == "TXT") {
+    visitor.TraverseDecl(Context.getTranslationUnitDecl());
     ComplexityKernelVisitor complexityVisitor(&Context);
     complexityVisitor.visit(visitor.root);
 
     TxtPrinter printer;
     printer.gen_out(visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
+    visitor.TraverseDecl(Context.getTranslationUnitDecl());
     DotPrinter printer;
     printer.gen_out(visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "perfModel") {
     outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
-    PerfModelPrinter printer(&visitor.tensilicaVariables);
-    printer.gen_out(visitor.root, Context, this->outputFile);
+
+    KernelFunctionVisitor kernelVisitor(&Context, &visitor);
+    kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
+    
+    std::fstream file("output/" + this->outputFile, std::fstream::out | std::fstream::trunc);
+    PerfModelPrinter printer;
+    for (auto& [funcDecl, kernelTree] : kernelVisitor.kernelFunctions) {
+      printer.tensilicaVariables = &(kernelTree->tensilicaVariables);
+      printer.kernelFunction = funcDecl;
+      printer.gen_out(kernelTree->root, Context, this->outputFile);
+    }
   }
 }
 

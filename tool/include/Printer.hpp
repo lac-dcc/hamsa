@@ -2,9 +2,10 @@
 #define PRINTER
 
 #include "Complexity.hpp"
-#include "LoopInfoTool.hpp"
 #include "Kernel.hpp"
+#include "LoopInfoTool.hpp"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include <string>
 
 /**
@@ -63,11 +64,9 @@ public:
  * \brief Concrete Printer class for a performance model function.
  */
 class PerfModelPrinter : public Printer {
-private:
-  llvm::SmallVector<TensilicaVar, 4>* tensilicaVariables;
-
 public:
-  PerfModelPrinter(llvm::SmallVector<TensilicaVar, 4>* variables) : tensilicaVariables(variables) {}
+  std::unordered_map<std::string, TensilicaVar>* tensilicaVariables;
+  clang::FunctionDecl* kernelFunction;
 
   virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
 };

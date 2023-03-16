@@ -11,6 +11,12 @@ LoopKernel::LoopKernel(int64_t id) {
 
 LoopKernel::~LoopKernel() { delete this->child; }
 
+SeqKernel::~SeqKernel() {
+  for (Kernel* child : this->children) {
+    delete child;
+  }
+}
+
 CondKernel::CondKernel(int64_t id, bool hasElse) {
   this->id = id;
   this->thenChild = new SeqKernel;

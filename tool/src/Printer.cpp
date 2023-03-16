@@ -40,34 +40,36 @@ std::string Printer::getIncRepresentation(Expr* inc, ASTContext& Context) {
 }
 
 void TxtPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
-  std::fstream outputFile;
-  outputFile.open("output/" + outName, std::fstream::out);
+  std::fstream outputFile("output/" + outName, std::fstream::out);
   TxtKernelVisitor txtVisitor(&Context);
   outputFile << txtVisitor.visit(root) << "\nTotal complexity: O(" << root->complexity << ")";
 }
 
 void DotPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
-  std::fstream outputFile;
-  outputFile.open("output/" + outName, std::fstream::out);
+  std::fstream outputFile("output/" + outName, std::fstream::out);
   DotKernelVisitor visitor(&Context);
   outputFile << "digraph {\n" << visitor.visit(root) << "}";
 }
 
 void PerfModelPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
-  std::fstream outputFile;
+  std::fstream outputFile("output/" + outName, std::fstream::app);
   PerfModelKernelVisitor visitor(&Context);
-  outputFile.open("output/" + outName, std::fstream::out);
+  SourceManager& srcManager = Context.getSourceManager();
+
+  outputFile << "# at line " +
+                    std::to_string(srcManager.getSpellingLineNumber(this->kernelFunction->getSourceRange().getBegin()))
+             << ", " << this->kernelFunction->getNameAsString() << ":\n";
   outputFile << "def perfModel(self):\n";
-  for (const auto& var : *this->tensilicaVariables) {
+  for (const auto& [varName, var] : *this->tensilicaVariables) {
     if (var.origin == "inTile") {
-      outputFile << "\t" << var.name << " = self.io.input[0].dims[" << var.dimIndex << "].dim\n";
+      outputFile << "\t" << varName << " = self.io.input[0].dims[" << var.dimIndex << "].dim\n";
     } else if (var.origin == "outTile") {
-      outputFile << "\t" << var.name << " = self.io.output[0].dims[" << var.dimIndex << "].dim\n";
+      outputFile << "\t" << varName << " = self.io.output[0].dims[" << var.dimIndex << "].dim\n";
     } else if (var.origin == "XCHAL_IVPN_SIMD_WIDTH") {
-      outputFile << "\t" << var.name << " = self.XCHAL_IVPN_SIMD_WIDTH\n";
+      outputFile << "\t" << varName << " = self.XCHAL_IVPN_SIMD_WIDTH\n";
     }
   }
   outputFile << "\treturn TreePerfModel(self._normalized_name(), ";
   outputFile << visitor.visit(root);
-  outputFile << ')';
+  outputFile << ")\n\n";
 }

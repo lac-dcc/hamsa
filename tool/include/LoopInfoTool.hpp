@@ -12,11 +12,17 @@
 #include <string>
 
 struct TensilicaVar {
-  std::string name;
   std::string origin;
   int dimIndex = -1;
 };
-  
+
+struct TensilicaTree {
+  ~TensilicaTree() { delete this->root; }
+  std::unordered_map<std::string, TensilicaVar>
+      tensilicaVariables;///< Hash table that maps variable names to tensilica function names.
+  SeqKernel* root;        ///< Kernels tree root.
+};
+
 /**
  * \class LoopInfoVisitor
  *
@@ -28,7 +34,8 @@ struct TensilicaVar {
  */
 class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
 public:
-  llvm::SmallVector<TensilicaVar, 4> tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
+  std::unordered_map<std::string, TensilicaVar>
+      tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
 
   /**
@@ -40,12 +47,7 @@ public:
   /**
    * \brief Destructor method.
    */
-  ~LoopInfoVisitor() {
-    delete this->root;
-
-    for (auto it = this->loopKernels.begin(), end = this->loopKernels.end(); it != end; ++it)
-      delete it->second;
-  }
+  ~LoopInfoVisitor() { delete this->root; }
 
   /**
    * \brief Visit method to be applied to ForStmt nodes.
@@ -58,6 +60,8 @@ public:
    * \param fstmt ForStmt node being currently visited.
    */
   bool VisitIfStmt(clang::IfStmt* ifstmt);
+
+  void clearState();
 
 private:
   clang::ASTContext* context; ///< ASTContext to be used by the visitor.
@@ -82,7 +86,7 @@ private:
    * \param nested Flag that indicates if the current ForStmt is a nested for.
    */
   void traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse = false);
-  
+
   bool hasForVariable(clang::Stmt* node);
 
   /**
@@ -119,6 +123,30 @@ private:
    * \param kernel Kernel being visited.
    */
   void handleForBody(clang::Stmt* body, LoopKernel* kernel);
+};
+
+class KernelFunctionVisitor : public clang::RecursiveASTVisitor<KernelFunctionVisitor> {
+public:
+  /**
+   * \brief Constructor method.
+   * \param context ASTContext to be used by the visitor.
+   */
+  explicit KernelFunctionVisitor(clang::ASTContext* context, LoopInfoVisitor* visitor)
+      : context(context), loopVisitor(visitor) {}
+
+  ~KernelFunctionVisitor() {
+    for (auto& [_, kernelTree] : kernelFunctions) {
+      delete kernelTree;
+    }
+  }
+
+  bool VisitFunctionDecl(clang::FunctionDecl* funcDecl);
+
+  llvm::DenseMap<clang::FunctionDecl*, TensilicaTree*> kernelFunctions;
+
+private:
+  clang::ASTContext* context; ///< ASTContext to be used by the visitor.
+  LoopInfoVisitor* loopVisitor;
 };
 
 /**

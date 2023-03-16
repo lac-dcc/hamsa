@@ -38,6 +38,8 @@ public:
  */
 class SeqKernel : public Kernel {
 public:
+  ~SeqKernel();
+
   llvm::SmallSet<Kernel*, 3> children; ///< Set of child kernels
   Kernel* parent = nullptr;            ///< Parent kernel (if there is any).
 
