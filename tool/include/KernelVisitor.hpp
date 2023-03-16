@@ -112,24 +112,24 @@ public:
 };
 
 /**
- * \class PerfModelKernelVisitor
+ * \class TensilicaKernelVisitor
  *
  * \brief Implementation of a Visitor that traverses the Kernels tree.
  *
  * This class implements a recursive Kernel Visitor.
  * The main goal is traverse the kernels tree to generate the perfModel output.
  */
-class PerfModelKernelVisitor : public KernelVisitor<std::string> {
+class TensilicaKernelVisitor : public KernelVisitor<std::string> {
 private:
   enum TPTypes { TPLoops, TPCond, TPSeq };
   std::stack<TPTypes> TPContext;
 
 public:
   /**
-   * \brief PerfModelKernelVisitor constructor.
+   * \brief TensilicaKernelVisitor constructor.
    * \param context Clang AST context.
    */
-  PerfModelKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
+  TensilicaKernelVisitor(clang::ASTContext* context) : KernelVisitor<std::string>(context) {}
 
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);

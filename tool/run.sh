@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-LIB="./build/src/libLoopInfoTool.so"
+LIB="./build/src/libHamsa.so"
 
 if [ $# -lt 3 ]
 then

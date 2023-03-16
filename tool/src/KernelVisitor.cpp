@@ -116,7 +116,7 @@ std::string DotKernelVisitor::visit(CondKernel* kernel) {
   return label + links;
 }
 
-std::string PerfModelKernelVisitor::visit(SeqKernel* kernel) {
+std::string TensilicaKernelVisitor::visit(SeqKernel* kernel) {
   if (kernel->children.size() == 1) {
     return (*kernel->children.begin())->accept(this);
   } else if (kernel->children.size() > 1) {
@@ -140,7 +140,7 @@ std::string PerfModelKernelVisitor::visit(SeqKernel* kernel) {
   return "";
 }
 
-std::string PerfModelKernelVisitor::visit(LoopKernel* kernel) {
+std::string TensilicaKernelVisitor::visit(LoopKernel* kernel) {
   std::string out = "";
   bool openParenthesis = false;
   if (this->TPContext.empty() || this->TPContext.top() != this->TPLoops) {
@@ -166,7 +166,7 @@ std::string PerfModelKernelVisitor::visit(LoopKernel* kernel) {
   return out;
 }
 
-std::string PerfModelKernelVisitor::visit(CondKernel* kernel) {
+std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
   std::string out = "";
   if (!this->TPContext.empty() && this->TPContext.top() == this->TPLoops) {
     out += "], ";

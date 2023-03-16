@@ -1,5 +1,5 @@
-#ifndef FOR_INFO_TOOL
-#define FOR_INFO_TOOL
+#ifndef TREE_BUILDER
+#define TREE_BUILDER
 
 #include "Kernel.hpp"
 #include "clang/AST/ASTConsumer.h"
@@ -24,7 +24,7 @@ struct TensilicaTree {
 };
 
 /**
- * \class LoopInfoVisitor
+ * \class TreeBuilderVisitor
  *
  * \brief Implementation of a recursive AST Visitor.
  *
@@ -32,7 +32,7 @@ struct TensilicaTree {
  * The main goal is to extract information from loops, such as their induction variables,
  * bounds and inputs.
  */
-class LoopInfoVisitor : public clang::RecursiveASTVisitor<LoopInfoVisitor> {
+class TreeBuilderVisitor : public clang::RecursiveASTVisitor<TreeBuilderVisitor> {
 public:
   std::unordered_map<std::string, TensilicaVar>
       tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
@@ -42,12 +42,12 @@ public:
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
    */
-  explicit LoopInfoVisitor(clang::ASTContext* context) : context(context) { this->root = new SeqKernel; }
+  explicit TreeBuilderVisitor(clang::ASTContext* context) : context(context) { this->root = new SeqKernel; }
 
   /**
    * \brief Destructor method.
    */
-  ~LoopInfoVisitor() { delete this->root; }
+  ~TreeBuilderVisitor() { delete this->root; }
 
   /**
    * \brief Visit method to be applied to ForStmt nodes.
@@ -131,7 +131,7 @@ public:
    * \brief Constructor method.
    * \param context ASTContext to be used by the visitor.
    */
-  explicit KernelFunctionVisitor(clang::ASTContext* context, LoopInfoVisitor* visitor)
+  explicit KernelFunctionVisitor(clang::ASTContext* context, TreeBuilderVisitor* visitor)
       : context(context), loopVisitor(visitor) {}
 
   ~KernelFunctionVisitor() {
@@ -146,38 +146,38 @@ public:
 
 private:
   clang::ASTContext* context; ///< ASTContext to be used by the visitor.
-  LoopInfoVisitor* loopVisitor;
+  TreeBuilderVisitor* loopVisitor;
 };
 
 /**
- * \class LoopInfoConsumer
+ * \class TreeBuilderConsumer
  *
  * \brief Class used to write generic actions on the AST.
  */
-class LoopInfoConsumer : public clang::ASTConsumer {
+class TreeBuilderConsumer : public clang::ASTConsumer {
 public:
-  explicit LoopInfoConsumer(clang::ASTContext* Context, std::string outputFile, std::string format)
+  explicit TreeBuilderConsumer(clang::ASTContext* Context, std::string outputFile, std::string format)
       : visitor(Context), outputFile(outputFile), outputFormat(format) {}
 
   virtual void HandleTranslationUnit(clang::ASTContext& Context);
 
 private:
-  LoopInfoVisitor visitor;
+  TreeBuilderVisitor visitor;
   std::string outputFile;
   std::string outputFormat;
 };
 
 /**
- * \class LoopInfoAction
+ * \class TreeBuilderAction
  *
  * \brief Class used to define a Clang plugin action.
  * To know more about Clang plugins: https://youtu.be/SnP-8QM-TlI
  */
-class LoopInfoAction : public clang::PluginASTAction {
+class TreeBuilderAction : public clang::PluginASTAction {
 protected:
   virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& Compiler,
                                                                 llvm::StringRef InFile) override {
-    return std::make_unique<LoopInfoConsumer>(&Compiler.getASTContext(), outputFile, outputFormat);
+    return std::make_unique<TreeBuilderConsumer>(&Compiler.getASTContext(), outputFile, outputFormat);
   }
 
   bool ParseArgs(const clang::CompilerInstance& Compiler, const std::vector<std::string>& args) override;
@@ -187,6 +187,6 @@ private:
   std::string outputFile = "output.txt";
 };
 
-static clang::FrontendPluginRegistry::Add<LoopInfoAction> X("hamsa", "get loop info");
+static clang::FrontendPluginRegistry::Add<TreeBuilderAction> X("hamsa", "get loop info");
 
 #endif

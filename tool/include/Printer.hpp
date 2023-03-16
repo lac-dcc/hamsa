@@ -3,7 +3,7 @@
 
 #include "Complexity.hpp"
 #include "Kernel.hpp"
-#include "LoopInfoTool.hpp"
+#include "TreeBuilder.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include <string>
@@ -59,11 +59,11 @@ public:
 };
 
 /**
- * \class PerfModelPrinter
+ * \class TensilicaPrinter
  *
  * \brief Concrete Printer class for a performance model function.
  */
-class PerfModelPrinter : public Printer {
+class TensilicaPrinter : public Printer {
 public:
   std::unordered_map<std::string, TensilicaVar>* tensilicaVariables;
   clang::FunctionDecl* kernelFunction;

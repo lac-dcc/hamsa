@@ -1,4 +1,4 @@
-#include "LoopInfoTool.hpp"
+#include "TreeBuilder.hpp"
 #include "KernelVisitor.hpp"
 #include "Printer.hpp"
 #include <fstream>
@@ -18,7 +18,7 @@ bool KernelFunctionVisitor::VisitFunctionDecl(FunctionDecl* funcDecl) {
   return true;
 }
 
-void LoopInfoVisitor::clearState() {
+void TreeBuilderVisitor::clearState() {
   this->root = new SeqKernel;
   this->tensilicaVariables.clear();
   this->loopKernels.clear();
@@ -27,7 +27,7 @@ void LoopInfoVisitor::clearState() {
   this->bodyDeclarations.clear();
 }
 
-bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
+bool TreeBuilderVisitor::VisitForStmt(ForStmt* fstmt) {
   LoopKernel* kernel;
   int64_t id = fstmt->getID(*this->context);
   if (this->loopKernels.find(id) != this->loopKernels.end()) {
@@ -61,7 +61,7 @@ bool LoopInfoVisitor::VisitForStmt(ForStmt* fstmt) {
   return true;
 }
 
-void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool firstCall) {
+void TreeBuilderVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool firstCall) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -95,7 +95,7 @@ void LoopInfoVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool first
   }
 }
 
-void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
+void TreeBuilderVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -131,7 +131,7 @@ void LoopInfoVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
   }
 }
 
-void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
+void TreeBuilderVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
   if (!init)
     return;
 
@@ -156,7 +156,7 @@ void LoopInfoVisitor::handleForInit(Stmt* init, LoopKernel* kernel) {
   }
 }
 
-void LoopInfoVisitor::handleForCond(Expr* cond, LoopKernel* kernel) {
+void TreeBuilderVisitor::handleForCond(Expr* cond, LoopKernel* kernel) {
   if (!cond)
     return;
 
@@ -167,7 +167,7 @@ void LoopInfoVisitor::handleForCond(Expr* cond, LoopKernel* kernel) {
   }
 }
 
-void LoopInfoVisitor::handleForInc(Expr* inc, LoopKernel* kernel) {
+void TreeBuilderVisitor::handleForInc(Expr* inc, LoopKernel* kernel) {
   if (!inc)
     return;
 
@@ -175,7 +175,7 @@ void LoopInfoVisitor::handleForInc(Expr* inc, LoopKernel* kernel) {
   this->traverseExpr(inc, kernel);
 }
 
-void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
+void TreeBuilderVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
   if (!body)
     return;
 
@@ -183,7 +183,7 @@ void LoopInfoVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
     this->traverseForBody(bodyStmt, kernel);
 }
 
-bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
+bool TreeBuilderVisitor::VisitIfStmt(IfStmt* ifstmt) {
   auto id = ifstmt->getID(*this->context);
 
   if (!this->hasForVariable(ifstmt->getCond()))
@@ -219,7 +219,7 @@ bool LoopInfoVisitor::VisitIfStmt(IfStmt* ifstmt) {
   return true;
 }
 
-void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse) {
+void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse) {
   for (auto* child : node->children()) {
     if (!child)
       continue;
@@ -245,7 +245,7 @@ void LoopInfoVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool 
   }
 }
 
-bool LoopInfoVisitor::hasForVariable(Stmt* node) {
+bool TreeBuilderVisitor::hasForVariable(Stmt* node) {
   bool result = false;
   for (auto* child : node->children()) {
     DeclRefExpr* refExpr;
@@ -259,7 +259,7 @@ bool LoopInfoVisitor::hasForVariable(Stmt* node) {
   return result;
 }
 
-void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
+void TreeBuilderConsumer::HandleTranslationUnit(ASTContext& Context) {
   if (this->outputFormat == "txt" || this->outputFormat == "TXT") {
     visitor.TraverseDecl(Context.getTranslationUnitDecl());
     ComplexityKernelVisitor complexityVisitor(&Context);
@@ -271,14 +271,14 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
     visitor.TraverseDecl(Context.getTranslationUnitDecl());
     DotPrinter printer;
     printer.gen_out(visitor.root, Context, this->outputFile);
-  } else if (this->outputFormat == "perfModel") {
+  } else if (this->outputFormat == "tensilica") {
     outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
 
     KernelFunctionVisitor kernelVisitor(&Context, &visitor);
     kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
     
     std::fstream file("output/" + this->outputFile, std::fstream::out | std::fstream::trunc);
-    PerfModelPrinter printer;
+    TensilicaPrinter printer;
     for (auto& [funcDecl, kernelTree] : kernelVisitor.kernelFunctions) {
       printer.tensilicaVariables = &(kernelTree->tensilicaVariables);
       printer.kernelFunction = funcDecl;
@@ -287,7 +287,7 @@ void LoopInfoConsumer::HandleTranslationUnit(ASTContext& Context) {
   }
 }
 
-bool LoopInfoAction::ParseArgs(const CompilerInstance& Compiler, const std::vector<std::string>& args) {
+bool TreeBuilderAction::ParseArgs(const CompilerInstance& Compiler, const std::vector<std::string>& args) {
   for (size_t i = 0, end = args.size(); i < end; ++i) {
     DiagnosticsEngine& diagnostics = Compiler.getDiagnostics();
     if (args[i] == "-output-format") {

@@ -51,9 +51,9 @@ void DotPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outNa
   outputFile << "digraph {\n" << visitor.visit(root) << "}";
 }
 
-void PerfModelPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
+void TensilicaPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
   std::fstream outputFile("output/" + outName, std::fstream::app);
-  PerfModelKernelVisitor visitor(&Context);
+  TensilicaKernelVisitor visitor(&Context);
   SourceManager& srcManager = Context.getSourceManager();
 
   outputFile << "# at line " +
