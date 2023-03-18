@@ -2,9 +2,9 @@
 #define KERNEL_VISITOR
 
 #include "clang/AST/ASTContext.h"
-#include <unordered_map>
 #include <stack>
 #include <string>
+#include <unordered_map>
 
 class Kernel;
 class LoopKernel;
@@ -131,6 +131,7 @@ class TensilicaKernelVisitor : public KernelVisitor<std::string> {
 private:
   enum TPTypes { TPLoops, TPCond, TPSeq };
   std::stack<TPTypes> TPContext;
+
 public:
   std::unordered_map<std::string, std::string> visitedFunctions;
   TensilicaKernelVisitor() {}

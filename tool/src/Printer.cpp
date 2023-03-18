@@ -1,5 +1,5 @@
-#include "Printer.hpp"
 #include "KernelVisitor.hpp"
+#include "Printer.hpp"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
@@ -72,7 +72,9 @@ void TensilicaPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string
     }
   }
   outputFile << "\treturn TreePerfModel(self._normalized_name(), ";
-  if (this->visitor.visitedFunctions.find(this->kernelFunction->getNameAsString()) != this->visitor.visitedFunctions.end()) {
+  
+  if (this->visitor.visitedFunctions.find(this->kernelFunction->getNameAsString()) !=
+      this->visitor.visitedFunctions.end()) {
     outputFile << this->visitor.visitedFunctions[this->kernelFunction->getNameAsString()];
   } else {
     std::string complexity = this->visitor.visit(root);

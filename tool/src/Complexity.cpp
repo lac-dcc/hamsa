@@ -5,7 +5,7 @@ using namespace llvm;
 using namespace clang;
 
 std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
-  // (limit + inc - init - 1) / inc 
+  // (limit + inc - init - 1) / inc
   // (|limit + inc - init| - 1) / |inc|
 
   std::string init = Printer::getSourceCodeText(kernel->init, context);
@@ -24,11 +24,11 @@ std::string calculateSingleCost(LoopKernel* kernel, ASTContext& context) {
   if (!initIsNumber || (initIsNumber && init != "0"))
     iterations += " - " + init;
 
-  if(kernel->limitOp == "<")
+  if (kernel->limitOp == "<")
     iterations += " - 1";
-  if(kernel->limitOp == ">")
+  if (kernel->limitOp == ">")
     iterations += " + 1";
-    
+
   if (incSignal == '-')
     iterations += ") // (-" + inc + ")";
   else

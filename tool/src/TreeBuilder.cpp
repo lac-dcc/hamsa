@@ -1,6 +1,6 @@
-#include "TreeBuilder.hpp"
 #include "KernelVisitor.hpp"
 #include "Printer.hpp"
+#include "TreeBuilder.hpp"
 #include <fstream>
 
 using namespace clang;
@@ -276,7 +276,7 @@ bool TreeBuilderVisitor::hasForVariable(Stmt* node) {
         int index = std::atoi(&funcName[18]) - 1;
         if (funcName.size() >= 25 && funcName.substr(20, 5) == "PITCH")
           this->tensilicaVariables["pitch"] = {"pitch", index};
-        
+
         return true;
       }
     }
@@ -302,7 +302,7 @@ void TreeBuilderConsumer::HandleTranslationUnit(ASTContext& Context) {
   } else if (this->outputFormat == "tensilica") {
     KernelFunctionVisitor kernelVisitor(&Context, &visitor);
     kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
-    
+
     std::fstream file("output/" + this->outputFile, std::fstream::out | std::fstream::trunc);
     TensilicaPrinter printer;
     for (auto& [funcDecl, kernelTree] : kernelVisitor.kernelFunctions) {

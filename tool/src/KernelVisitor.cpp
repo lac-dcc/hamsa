@@ -1,5 +1,5 @@
-#include "KernelVisitor.hpp"
 #include "Complexity.hpp"
+#include "KernelVisitor.hpp"
 #include "Printer.hpp"
 #include "clang/Basic/SourceManager.h"
 
@@ -177,14 +177,14 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
 
   // Cadence specific
   if (auto* binaryOp = dyn_cast<BinaryOperator>(kernel->condition)) {
-    std::string LHS = Printer::getSourceCodeText(binaryOp->getLHS(), *this->context); 
+    std::string LHS = Printer::getSourceCodeText(binaryOp->getLHS(), *this->context);
     std::string RHS = Printer::getSourceCodeText(binaryOp->getRHS(), *this->context);
 
-    if(LHS.size() >= 25 && LHS.substr(20, 5) == "PITCH") 
+    if (LHS.size() >= 25 && LHS.substr(20, 5) == "PITCH")
       LHS = "pitch";
-      
+
     switch (binaryOp->getOpcode()) {
-    case BinaryOperator::Opcode::BO_LT: 
+    case BinaryOperator::Opcode::BO_LT:
       out += "cneq(" + RHS + " % 2, 0)";
       break;
     case BinaryOperator::Opcode::BO_GT:
@@ -205,7 +205,7 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
     }
   }
   if (kernel->thenChild->children.size() > 0)
-   out += ", " +  this->visit(kernel->thenChild);
+    out += ", " + this->visit(kernel->thenChild);
   out += ")";
 
   this->TPContext.pop();

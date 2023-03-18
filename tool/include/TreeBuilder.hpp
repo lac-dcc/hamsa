@@ -8,8 +8,8 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 struct TensilicaVar {
   std::string origin;
@@ -19,7 +19,7 @@ struct TensilicaVar {
 struct TensilicaTree {
   ~TensilicaTree() { delete this->root; }
   std::unordered_map<std::string, TensilicaVar>
-      tensilicaVariables;///< Hash table that maps variable names to tensilica function names.
+      tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
 };
 
@@ -175,7 +175,7 @@ private:
  *
  * \brief Class used to define a Clang plugin action.
  * To know more about Clang plugins: https://youtu.be/SnP-8QM-TlI
- */ 
+ */
 class TreeBuilderAction : public clang::PluginASTAction {
 protected:
   virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& Compiler,
