@@ -302,7 +302,7 @@ void TreeBuilderConsumer::HandleTranslationUnit(ASTContext& Context) {
   } else if (this->outputFormat == "tensilica") {
     KernelFunctionVisitor kernelVisitor(&Context, &visitor);
     kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
-
+    outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
     std::fstream file("output/" + this->outputFile, std::fstream::out | std::fstream::trunc);
     TensilicaPrinter printer;
     for (auto& [funcDecl, kernelTree] : kernelVisitor.kernelFunctions) {
