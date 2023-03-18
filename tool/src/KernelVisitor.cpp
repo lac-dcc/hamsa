@@ -214,7 +214,6 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
 }
 
 std::string TensilicaKernelVisitor::visit(CallKernel* kernel) {
-  llvm::outs() << "Entrou Visit\n";
   if (this->visitedFunctions.find(kernel->kernelName) != this->visitedFunctions.end()) {
     return this->visitedFunctions[kernel->kernelName];
   } else {

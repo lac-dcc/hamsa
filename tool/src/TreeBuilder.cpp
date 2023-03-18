@@ -249,11 +249,9 @@ void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bo
         callNode->origin = (*this->kernelFunctions)[funcDecl]->root;
         callNode->id = funcDecl->getID();
         if (!isElse) {
-          outs() << "Entrou Then\n";
           cond->thenChild->children.insert(callNode);
           callNode->parent = cond->thenChild;
         } else {
-          outs() << "Entrou Else\n";
           cond->elseChild->children.insert(callNode);
           callNode->parent = cond->elseChild;
         }
@@ -302,8 +300,6 @@ void TreeBuilderConsumer::HandleTranslationUnit(ASTContext& Context) {
     DotPrinter printer;
     printer.gen_out(visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "tensilica") {
-    outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
-
     KernelFunctionVisitor kernelVisitor(&Context, &visitor);
     kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
     
