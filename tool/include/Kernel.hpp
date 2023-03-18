@@ -85,4 +85,12 @@ public:
   virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
 
+class CallKernel : public Kernel {
+public:
+  SeqKernel* parent;
+  std::string kernelName;
+  SeqKernel* origin;
+  virtual std::string accept(KernelVisitor<std::string>* visitor);
+};
+
 #endif

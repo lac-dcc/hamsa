@@ -175,28 +175,51 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
   this->TPContext.push(this->TPCond);
   out += "TPCond(";
 
+  // Cadence specific
   if (auto* binaryOp = dyn_cast<BinaryOperator>(kernel->condition)) {
+    std::string LHS = Printer::getSourceCodeText(binaryOp->getLHS(), *this->context); 
+    std::string RHS = Printer::getSourceCodeText(binaryOp->getRHS(), *this->context);
+
+    if(LHS.size() >= 25 && LHS.substr(20, 5) == "PITCH") 
+      LHS = "pitch";
+      
     switch (binaryOp->getOpcode()) {
     case BinaryOperator::Opcode::BO_LT: 
-      out += "cneq(" + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + " % 2, 0)";
+      out += "cneq(" + RHS + " % 2, 0)";
       break;
     case BinaryOperator::Opcode::BO_GT:
-      out += "cgreater(" + Printer::getSourceCodeText(binaryOp->getLHS(), *this->context) + ", " + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + ")";
+      out += "cgreater(" + LHS + ", " + RHS + ")";
       break;
     case BinaryOperator::Opcode::BO_EQ:
-      out += "ceq(" + Printer::getSourceCodeText(binaryOp->getLHS(), *this->context) + ", " + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + ")";
+      out += "ceq(" + LHS + ", " + RHS + ")";
       break;
     case BinaryOperator::Opcode::BO_NE:
-      out += "cneq(" + Printer::getSourceCodeText(binaryOp->getLHS(), *this->context) + ", " + Printer::getSourceCodeText(binaryOp->getRHS(), *this->context) + ")";
+      out += "cneq(" + LHS + ", " + RHS + ")";
+      break;
+    case BinaryOperator::Opcode::BO_LE:
+      out += "cleq(" + LHS + ", " + RHS + ")";
       break;
     default:
       out += Printer::getSourceCodeText(binaryOp, *this->context);
       break;
     }
   }
+  if (kernel->thenChild->children.size() > 0)
+   out += ", " +  this->visit(kernel->thenChild);
   out += ")";
 
   this->TPContext.pop();
 
   return out;
+}
+
+std::string TensilicaKernelVisitor::visit(CallKernel* kernel) {
+  llvm::outs() << "Entrou Visit\n";
+  if (this->visitedFunctions.find(kernel->kernelName) != this->visitedFunctions.end()) {
+    return this->visitedFunctions[kernel->kernelName];
+  } else {
+    std::string complexity = this->visit(kernel->origin);
+    this->visitedFunctions[kernel->kernelName] = complexity;
+    return complexity;
+  }
 }

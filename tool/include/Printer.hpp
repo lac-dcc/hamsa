@@ -3,6 +3,7 @@
 
 #include "Complexity.hpp"
 #include "Kernel.hpp"
+#include "KernelVisitor.hpp"
 #include "TreeBuilder.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -65,9 +66,10 @@ public:
  */
 class TensilicaPrinter : public Printer {
 public:
+  virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
   std::unordered_map<std::string, TensilicaVar>* tensilicaVariables;
   clang::FunctionDecl* kernelFunction;
-
-  virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
+private:
+  TensilicaKernelVisitor visitor;
 };
 #endif

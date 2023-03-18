@@ -53,7 +53,7 @@ void DotPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outNa
 
 void TensilicaPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string outName) {
   std::fstream outputFile("output/" + outName, std::fstream::app);
-  TensilicaKernelVisitor visitor(&Context);
+  this->visitor.context = &Context;
   SourceManager& srcManager = Context.getSourceManager();
 
   outputFile << "# at line " +
@@ -67,9 +67,17 @@ void TensilicaPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string
       outputFile << "\t" << varName << " = self.io.output[0].dims[" << var.dimIndex << "].dim\n";
     } else if (var.origin == "XCHAL_IVPN_SIMD_WIDTH") {
       outputFile << "\t" << varName << " = self.XCHAL_IVPN_SIMD_WIDTH\n";
+    } else if (var.origin == "pitch") {
+      outputFile << "\t" << varName << " = self.io.input[0].dims[" << var.dimIndex << "].pitch\n";
     }
   }
   outputFile << "\treturn TreePerfModel(self._normalized_name(), ";
-  outputFile << visitor.visit(root);
+  if (this->visitor.visitedFunctions.find(this->kernelFunction->getNameAsString()) != this->visitor.visitedFunctions.end()) {
+    outputFile << this->visitor.visitedFunctions[this->kernelFunction->getNameAsString()];
+  } else {
+    std::string complexity = this->visitor.visit(root);
+    this->visitor.visitedFunctions[this->kernelFunction->getNameAsString()] = complexity;
+    outputFile << complexity;
+  }
   outputFile << ")\n\n";
 }

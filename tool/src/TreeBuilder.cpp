@@ -241,6 +241,25 @@ void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bo
       }
     }
 
+    if (auto* callExpr = dyn_cast<CallExpr>(child)) {
+      FunctionDecl* funcDecl = callExpr->getDirectCallee();
+      if (this->kernelFunctions->find(funcDecl) != this->kernelFunctions->end()) {
+        CallKernel* callNode = new CallKernel;
+        callNode->kernelName = funcDecl->getNameAsString();
+        callNode->origin = (*this->kernelFunctions)[funcDecl]->root;
+        callNode->id = funcDecl->getID();
+        if (!isElse) {
+          outs() << "Entrou Then\n";
+          cond->thenChild->children.insert(callNode);
+          callNode->parent = cond->thenChild;
+        } else {
+          outs() << "Entrou Else\n";
+          cond->elseChild->children.insert(callNode);
+          callNode->parent = cond->elseChild;
+        }
+      }
+    }
+
     this->traverseIfBody(child, cond, isElse);
   }
 }
@@ -251,6 +270,17 @@ bool TreeBuilderVisitor::hasForVariable(Stmt* node) {
     DeclRefExpr* refExpr;
     if ((refExpr = dyn_cast<DeclRefExpr>(child)) && this->forVariables.contains(refExpr->getDecl())) {
       return true;
+    }
+
+    if (auto* callExpr = dyn_cast<CallExpr>(child)) {
+      std::string funcName = callExpr->getDirectCallee()->getNameAsString();
+      if (funcName.substr(0, 18) == "XAI_TILE3D_GET_DIM") {
+        int index = std::atoi(&funcName[18]) - 1;
+        if (funcName.size() >= 25 && funcName.substr(20, 5) == "PITCH")
+          this->tensilicaVariables["pitch"] = {"pitch", index};
+        
+        return true;
+      }
     }
 
     result = result || this->hasForVariable(child);

@@ -40,3 +40,5 @@ std::string LoopKernel::accept(KernelVisitor<std::string>* visitor) { return vis
 std::string SeqKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }
 
 std::string CondKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }
+
+std::string CallKernel::accept(KernelVisitor<std::string>* visitor) { return visitor->visit(this); }

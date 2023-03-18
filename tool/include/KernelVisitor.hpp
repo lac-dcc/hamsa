@@ -2,6 +2,7 @@
 #define KERNEL_VISITOR
 
 #include "clang/AST/ASTContext.h"
+#include <unordered_map>
 #include <stack>
 #include <string>
 
@@ -9,6 +10,7 @@ class Kernel;
 class LoopKernel;
 class SeqKernel;
 class CondKernel;
+class CallKernel;
 
 /**
  * \class KernelVisitor
@@ -40,12 +42,15 @@ public:
    */
   virtual T visit(CondKernel* kernel) = 0;
 
+  virtual T visit(CallKernel* kernel) = 0;
+
 protected:
   /**
    * \brief KernelVisitor constructor.
    * \param context Clang AST context.
    */
   KernelVisitor(clang::ASTContext* context) : context(context) {}
+  KernelVisitor() {}
 };
 
 /**
@@ -67,6 +72,7 @@ public:
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
   virtual std::string visit(CondKernel* kernel);
+  virtual std::string visit(CallKernel* kernel) { return ""; }
 };
 
 /**
@@ -88,6 +94,7 @@ public:
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
   virtual std::string visit(CondKernel* kernel);
+  virtual std::string visit(CallKernel* kernel) { return ""; }
 };
 
 /**
@@ -109,6 +116,7 @@ public:
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
   virtual std::string visit(CondKernel* kernel);
+  virtual std::string visit(CallKernel* kernel) { return ""; }
 };
 
 /**
@@ -123,8 +131,9 @@ class TensilicaKernelVisitor : public KernelVisitor<std::string> {
 private:
   enum TPTypes { TPLoops, TPCond, TPSeq };
   std::stack<TPTypes> TPContext;
-
 public:
+  std::unordered_map<std::string, std::string> visitedFunctions;
+  TensilicaKernelVisitor() {}
   /**
    * \brief TensilicaKernelVisitor constructor.
    * \param context Clang AST context.
@@ -134,6 +143,7 @@ public:
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
   virtual std::string visit(CondKernel* kernel);
+  virtual std::string visit(CallKernel* kernel);
 };
 
 #endif

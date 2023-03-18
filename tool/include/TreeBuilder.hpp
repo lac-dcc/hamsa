@@ -8,7 +8,7 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include <map>
+#include <unordered_map>
 #include <string>
 
 struct TensilicaVar {
@@ -37,6 +37,7 @@ public:
   std::unordered_map<std::string, TensilicaVar>
       tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
+  llvm::DenseMap<clang::FunctionDecl*, TensilicaTree*>* kernelFunctions;
 
   /**
    * \brief Constructor method.
@@ -132,7 +133,9 @@ public:
    * \param context ASTContext to be used by the visitor.
    */
   explicit KernelFunctionVisitor(clang::ASTContext* context, TreeBuilderVisitor* visitor)
-      : context(context), loopVisitor(visitor) {}
+      : context(context), loopVisitor(visitor) {
+    this->loopVisitor->kernelFunctions = &this->kernelFunctions;
+  }
 
   ~KernelFunctionVisitor() {
     for (auto& [_, kernelTree] : kernelFunctions) {
@@ -172,7 +175,7 @@ private:
  *
  * \brief Class used to define a Clang plugin action.
  * To know more about Clang plugins: https://youtu.be/SnP-8QM-TlI
- */
+ */ 
 class TreeBuilderAction : public clang::PluginASTAction {
 protected:
   virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& Compiler,
