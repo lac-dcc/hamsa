@@ -1,6 +1,6 @@
+#include "TreeBuilder.hpp"
 #include "KernelVisitor.hpp"
 #include "Printer.hpp"
-#include "TreeBuilder.hpp"
 #include <fstream>
 
 using namespace clang;
@@ -44,7 +44,7 @@ bool TreeBuilderVisitor::VisitForStmt(ForStmt* fstmt) {
   this->handleForBody(fstmt->getBody(), kernel);
 
   if (kernel->parent != nullptr)
-    kernel->parent->children.insert(kernel);
+    kernel->parent->children.push_back(kernel);
 
   kernel->begin = fstmt->getSourceRange().getBegin();
 
@@ -103,7 +103,7 @@ void TreeBuilderVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
     DeclRefExpr* ref;
     if ((ref = dyn_cast<DeclRefExpr>(child)) && !ref->getDecl()->isFunctionOrFunctionTemplate()) {
       bool hadInsertion = kernel->inputs.insert(ref->getDecl()).second;
-      this->forVariables.insert(ref->getDecl());
+      this->forVariables[ref->getDecl()] = kernel;
 
       VarDecl* varDecl;
       if (hadInsertion && (varDecl = dyn_cast<VarDecl>(ref->getDecl())) &&
@@ -186,10 +186,12 @@ void TreeBuilderVisitor::handleForBody(Stmt* body, LoopKernel* kernel) {
 bool TreeBuilderVisitor::VisitIfStmt(IfStmt* ifstmt) {
   auto id = ifstmt->getID(*this->context);
 
-  if (!this->hasForVariable(ifstmt->getCond()))
+  std::string tensilicaModRHS = "";
+  if (!this->hasForVariable(ifstmt->getCond(), tensilicaModRHS))
     return true;
 
   CondKernel* cond = new CondKernel(id, ifstmt->hasElseStorage());
+  cond->tensilicaModRHS = tensilicaModRHS;
   if (this->ifStmtParents.find(id) != this->ifStmtParents.end()) {
     cond->parent = this->ifStmtParents[id];
   } else {
@@ -213,7 +215,7 @@ bool TreeBuilderVisitor::VisitIfStmt(IfStmt* ifstmt) {
     }
   }
 
-  cond->parent->children.insert(cond);
+  cond->parent->children.push_back(cond);
   cond->condition = ifstmt->getCond();
 
   return true;
@@ -246,13 +248,13 @@ void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bo
       if (this->kernelFunctions->find(funcDecl) != this->kernelFunctions->end()) {
         CallKernel* callNode = new CallKernel;
         callNode->kernelName = funcDecl->getNameAsString();
-        callNode->origin = (*this->kernelFunctions)[funcDecl]->root;
+        callNode->callee = (*this->kernelFunctions)[funcDecl]->root;
         callNode->id = funcDecl->getID();
         if (!isElse) {
-          cond->thenChild->children.insert(callNode);
+          cond->thenChild->children.push_back(callNode);
           callNode->parent = cond->thenChild;
         } else {
-          cond->elseChild->children.insert(callNode);
+          cond->elseChild->children.push_back(callNode);
           callNode->parent = cond->elseChild;
         }
       }
@@ -262,11 +264,14 @@ void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bo
   }
 }
 
-bool TreeBuilderVisitor::hasForVariable(Stmt* node) {
+bool TreeBuilderVisitor::hasForVariable(Stmt* node, std::string& tensilicaCondRHS) {
   bool result = false;
   for (auto* child : node->children()) {
     DeclRefExpr* refExpr;
-    if ((refExpr = dyn_cast<DeclRefExpr>(child)) && this->forVariables.contains(refExpr->getDecl())) {
+    if ((refExpr = dyn_cast<DeclRefExpr>(child)) &&
+        this->forVariables.find(refExpr->getDecl()) != this->forVariables.end()) {
+      if (auto* binaryOp = dyn_cast<BinaryOperator>(this->forVariables[refExpr->getDecl()]->inc))
+        tensilicaCondRHS = Printer::getSourceCodeText(binaryOp->getRHS(), *this->context);
       return true;
     }
 
@@ -281,7 +286,7 @@ bool TreeBuilderVisitor::hasForVariable(Stmt* node) {
       }
     }
 
-    result = result || this->hasForVariable(child);
+    result = result || this->hasForVariable(child, tensilicaCondRHS);
   }
 
   return result;

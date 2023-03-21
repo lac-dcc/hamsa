@@ -5,6 +5,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include <string>
 
 template <class T> class KernelVisitor;
@@ -40,8 +41,8 @@ class SeqKernel : public Kernel {
 public:
   ~SeqKernel();
 
-  llvm::SmallSet<Kernel*, 3> children; ///< Set of child kernels
-  Kernel* parent = nullptr;            ///< Parent kernel (if there is any).
+  llvm::SmallVector<Kernel*, 3> children; ///< Set of child kernels
+  Kernel* parent = nullptr;               ///< Parent kernel (if there is any).
 
   virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
@@ -82,6 +83,8 @@ public:
   SeqKernel* thenChild;        ///< Child kernel for the "then" branch.
   SeqKernel* elseChild;        ///< Child kernel for the "else" branch.
 
+  std::string tensilicaModRHS; ///< VERY Cadence specific
+
   virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
 
@@ -89,7 +92,8 @@ class CallKernel : public Kernel {
 public:
   SeqKernel* parent;
   std::string kernelName;
-  SeqKernel* origin;
+  SeqKernel* callee;
+
   virtual std::string accept(KernelVisitor<std::string>* visitor);
 };
 

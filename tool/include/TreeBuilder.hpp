@@ -69,7 +69,7 @@ private:
   llvm::DenseMap<int64_t, LoopKernel*>
       loopKernels; ///< Hash table of kernels identified during the Visitor's execution.
   llvm::DenseMap<int64_t, SeqKernel*> ifStmtParents; ///< Hash table that associates a ifStmt id with its parent.
-  llvm::SmallSet<clang::ValueDecl*, 8> forVariables; ///< Container used to store for's triplet variables.
+  llvm::DenseMap<clang::ValueDecl*, LoopKernel*> forVariables; ///< Container used to store for's triplet variables.
   llvm::DenseMap<clang::ValueDecl*, std::string>
       bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
   /**
@@ -88,7 +88,7 @@ private:
    */
   void traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse = false);
 
-  bool hasForVariable(clang::Stmt* node);
+  bool hasForVariable(clang::Stmt* node, std::string& tensilicaCondRHS);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.

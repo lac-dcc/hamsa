@@ -1,5 +1,5 @@
-#include "Complexity.hpp"
 #include "KernelVisitor.hpp"
+#include "Complexity.hpp"
 #include "Printer.hpp"
 #include "clang/Basic/SourceManager.h"
 
@@ -185,7 +185,7 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
 
     switch (binaryOp->getOpcode()) {
     case BinaryOperator::Opcode::BO_LT:
-      out += "cneq(" + RHS + " % 2, 0)";
+      out += "cneq(" + RHS + " % " + kernel->tensilicaModRHS + ", 0)";
       break;
     case BinaryOperator::Opcode::BO_GT:
       out += "cgreater(" + LHS + ", " + RHS + ")";
@@ -217,7 +217,7 @@ std::string TensilicaKernelVisitor::visit(CallKernel* kernel) {
   if (this->visitedFunctions.find(kernel->kernelName) != this->visitedFunctions.end()) {
     return this->visitedFunctions[kernel->kernelName];
   } else {
-    std::string complexity = this->visit(kernel->origin);
+    std::string complexity = this->visit(kernel->callee);
     this->visitedFunctions[kernel->kernelName] = complexity;
     return complexity;
   }
