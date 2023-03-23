@@ -84,6 +84,7 @@ public:
   SeqKernel* elseChild;        ///< Child kernel for the "else" branch.
 
   std::string tensilicaModRHS; ///< VERY Cadence specific
+  std::string tensilicaCondLowerLim = "";
 
   virtual std::string accept(KernelVisitor<std::string>* visitor);
 };

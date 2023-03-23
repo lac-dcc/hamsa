@@ -187,11 +187,19 @@ bool TreeBuilderVisitor::VisitIfStmt(IfStmt* ifstmt) {
   auto id = ifstmt->getID(*this->context);
 
   std::string tensilicaModRHS = "";
-  if (!this->hasForVariable(ifstmt->getCond(), tensilicaModRHS))
+  bool hasPitch = false;
+  if (!this->hasForVariable(ifstmt->getCond(), tensilicaModRHS, hasPitch))
     return true;
 
   CondKernel* cond = new CondKernel(id, ifstmt->hasElseStorage());
   cond->tensilicaModRHS = tensilicaModRHS;
+  cond->condition = ifstmt->getCond();
+  if (hasPitch) {
+    cond->tensilicaCondLowerLim = this->currCondLowerLim;
+    if (auto* binaryOp = dyn_cast<BinaryOperator>(cond->condition))
+      this->currCondLowerLim = Printer::getSourceCodeText(binaryOp->getRHS(), *this->context);
+  }
+
   if (this->ifStmtParents.find(id) != this->ifStmtParents.end()) {
     cond->parent = this->ifStmtParents[id];
   } else {
@@ -216,7 +224,6 @@ bool TreeBuilderVisitor::VisitIfStmt(IfStmt* ifstmt) {
   }
 
   cond->parent->children.push_back(cond);
-  cond->condition = ifstmt->getCond();
 
   return true;
 }
@@ -264,7 +271,7 @@ void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bo
   }
 }
 
-bool TreeBuilderVisitor::hasForVariable(Stmt* node, std::string& tensilicaCondRHS) {
+bool TreeBuilderVisitor::hasForVariable(Stmt* node, std::string& tensilicaCondRHS, bool& hasPitch) {
   bool result = false;
   for (auto* child : node->children()) {
     DeclRefExpr* refExpr;
@@ -279,14 +286,16 @@ bool TreeBuilderVisitor::hasForVariable(Stmt* node, std::string& tensilicaCondRH
       std::string funcName = callExpr->getDirectCallee()->getNameAsString();
       if (funcName.substr(0, 18) == "XAI_TILE3D_GET_DIM") {
         int index = std::atoi(&funcName[18]) - 1;
-        if (funcName.size() >= 25 && funcName.substr(20, 5) == "PITCH")
+        if (funcName.size() >= 25 && funcName.substr(20, 5) == "PITCH") {
           this->tensilicaVariables["pitch"] = {"pitch", index};
+          hasPitch = true;
+        }
 
         return true;
       }
     }
 
-    result = result || this->hasForVariable(child, tensilicaCondRHS);
+    result = result || this->hasForVariable(child, tensilicaCondRHS, hasPitch);
   }
 
   return result;

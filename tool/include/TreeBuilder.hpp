@@ -72,6 +72,8 @@ private:
   llvm::DenseMap<clang::ValueDecl*, LoopKernel*> forVariables; ///< Container used to store for's triplet variables.
   llvm::DenseMap<clang::ValueDecl*, std::string>
       bodyDeclarations; ///< Hash table of variables declared inside the loop's body.
+
+  std::string currCondLowerLim = "";
   /**
    * \brief Depth-first traversal that searches for references to variables (inputs) and nested
    *        loops in a loop's body.
@@ -88,7 +90,7 @@ private:
    */
   void traverseIfBody(clang::Stmt* node, CondKernel*& cond, bool isElse = false);
 
-  bool hasForVariable(clang::Stmt* node, std::string& tensilicaCondRHS);
+  bool hasForVariable(clang::Stmt* node, std::string& tensilicaCondRHS, bool& hasPitch);
 
   /**
    * \brief Depth-first traversal that searches for references to variables in an expression.

@@ -197,7 +197,11 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
       out += "cneq(" + LHS + ", " + RHS + ")";
       break;
     case BinaryOperator::Opcode::BO_LE:
-      out += "cleq(" + LHS + ", " + RHS + ")";
+      if (kernel->tensilicaCondLowerLim.empty()) {
+        out += "cleq(" + LHS + ", " + RHS + ")";
+      } else {
+        out += "cand(cgreater(" + LHS + ", " + kernel->tensilicaCondLowerLim + "), cleq(" + LHS + ", " + RHS + "))";
+      }
       break;
     default:
       out += Printer::getSourceCodeText(binaryOp, *this->context);
