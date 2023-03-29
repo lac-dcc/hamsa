@@ -65,10 +65,14 @@ void TensilicaPrinter::gen_out(SeqKernel* root, ASTContext& Context, std::string
       outputFile << "\t" << varName << " = self.io.input[0].dims[" << var.dimIndex << "].dim\n";
     } else if (var.origin == "outTile") {
       outputFile << "\t" << varName << " = self.io.output[0].dims[" << var.dimIndex << "].dim\n";
-    } else if (var.origin == "XCHAL_IVPN_SIMD_WIDTH") {
-      outputFile << "\t" << varName << " = self.XCHAL_IVPN_SIMD_WIDTH\n";
+    } else if (varName == "vectorizationWidth") {
+      outputFile << "\t" << varName << " = " << var.origin << "\n";
     } else if (var.origin == "pitch") {
       outputFile << "\t" << varName << " = self.io.input[0].dims[" << var.dimIndex << "].pitch\n";
+    } else if (var.origin == "XCHAL_IVPN_SIMD_WIDTH") {
+      outputFile << "\t" << varName << " = self.XCHAL_IVPN_SIMD_WIDTH\n";
+    } else {
+      outputFile << "\t# " << varName << " = " << var.origin << "\n";
     }
   }
   outputFile << "\treturn TreePerfModel(self._normalized_name(), ";

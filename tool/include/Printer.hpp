@@ -67,7 +67,7 @@ public:
 class TensilicaPrinter : public Printer {
 public:
   virtual void gen_out(SeqKernel* root, clang::ASTContext& Context, std::string outName);
-  std::unordered_map<std::string, TensilicaVar>* tensilicaVariables;
+  std::map<std::string, TensilicaVar>* tensilicaVariables;
   clang::FunctionDecl* kernelFunction;
 
 private:

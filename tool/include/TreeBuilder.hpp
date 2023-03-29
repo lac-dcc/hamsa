@@ -9,7 +9,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include <string>
-#include <unordered_map>
+#include <map>
 
 struct TensilicaVar {
   std::string origin;
@@ -18,7 +18,7 @@ struct TensilicaVar {
 
 struct TensilicaTree {
   ~TensilicaTree() { delete this->root; }
-  std::unordered_map<std::string, TensilicaVar>
+  std::map<std::string, TensilicaVar>
       tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
 };
@@ -34,7 +34,7 @@ struct TensilicaTree {
  */
 class TreeBuilderVisitor : public clang::RecursiveASTVisitor<TreeBuilderVisitor> {
 public:
-  std::unordered_map<std::string, TensilicaVar>
+  std::map<std::string, TensilicaVar>
       tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
   llvm::DenseMap<clang::FunctionDecl*, TensilicaTree*>* kernelFunctions;
@@ -126,6 +126,8 @@ private:
    * \param kernel Kernel being visited.
    */
   void handleForBody(clang::Stmt* body, LoopKernel* kernel);
+
+  void getVWDecl(clang::Stmt* initialVal);
 };
 
 class KernelFunctionVisitor : public clang::RecursiveASTVisitor<KernelFunctionVisitor> {

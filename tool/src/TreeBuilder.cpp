@@ -95,6 +95,27 @@ void TreeBuilderVisitor::traverseForBody(Stmt* node, LoopKernel* kernel, bool fi
   }
 }
 
+void TreeBuilderVisitor::getVWDecl(Stmt* initialVal) {
+  for (auto* child : initialVal->children()) {
+    if (!child)
+      continue;
+    
+    getVWDecl(child);
+
+    SourceManager& srcManager = context->getSourceManager();
+    const LangOptions& langOpts = context->getLangOpts();
+
+    if (auto* refExpr = dyn_cast<DeclRefExpr>(child)) {
+      if (refExpr->getDecl()->getNameAsString() == "XCHAL_IVPN_SIMD_WIDTH") {
+        this->tensilicaVariables["XCHAL_IVPN_SIMD_WIDTH"] = {"XCHAL_IVPN_SIMD_WIDTH"};
+      } else if (auto* varDecl = dyn_cast<VarDecl>(refExpr->getDecl())) {
+        this->tensilicaVariables[refExpr->getDecl()->getNameAsString()] = {Printer::getSourceCodeText(varDecl->getInit(), *this->context)};
+      }
+    }
+
+  }
+}
+
 void TreeBuilderVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
   for (auto* child : node->children()) {
     if (!child)
@@ -119,9 +140,9 @@ void TreeBuilderVisitor::traverseExpr(Stmt* node, LoopKernel* kernel) {
                 (arg = dyn_cast<DeclRefExpr>((*call->arg_begin())->IgnoreImpCasts()))) {
               this->tensilicaVariables[varDecl->getNameAsString()] = {arg->getNameInfo().getAsString(), dimNum};
             }
-          } else if (auto* initRef = dyn_cast<DeclRefExpr>(initVal->IgnoreImpCasts())) {
-            if (initRef->getNameInfo().getAsString() == "XCHAL_IVPN_SIMD_WIDTH")
-              this->tensilicaVariables[varDecl->getNameAsString()] = {"XCHAL_IVPN_SIMD_WIDTH"};
+          } else if(varDecl->getNameAsString() == "vectorizationWidth") {
+              getVWDecl(initVal);
+              this->tensilicaVariables["vectorizationWidth"] = {Printer::getSourceCodeText(initVal, *this->context)};
           }
         }
       }
