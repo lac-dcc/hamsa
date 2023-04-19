@@ -12,6 +12,7 @@ bool KernelFunctionVisitor::VisitFunctionDecl(FunctionDecl* funcDecl) {
 
   this->loopVisitor->TraverseStmt(funcDecl->getBody());
 
+  this->loopVisitor->root->id = funcDecl->getID();
   this->kernelFunctions[funcDecl] = new TensilicaTree{this->loopVisitor->tensilicaVariables, this->loopVisitor->root};
   this->loopVisitor->clearState();
 
@@ -271,13 +272,14 @@ void TreeBuilderVisitor::traverseIfBody(clang::Stmt* node, CondKernel*& cond, bo
       }
     }
 
-    if (auto* callExpr = dyn_cast<CallExpr>(child)) {
+    CallExpr* callExpr;
+    if ((callExpr = dyn_cast<CallExpr>(child)) && this->kernelFunctions != nullptr) {
       FunctionDecl* funcDecl = callExpr->getDirectCallee();
       if (this->kernelFunctions->find(funcDecl) != this->kernelFunctions->end()) {
         CallKernel* callNode = new CallKernel;
-        callNode->kernelName = funcDecl->getNameAsString();
+        callNode->funcName = funcDecl->getNameAsString();
         callNode->callee = (*this->kernelFunctions)[funcDecl]->root;
-        callNode->id = funcDecl->getID();
+        callNode->id = callExpr->getID(*this->context);
         if (!isElse) {
           cond->thenChild->children.push_back(callNode);
           callNode->parent = cond->thenChild;
@@ -324,20 +326,25 @@ bool TreeBuilderVisitor::hasForVariable(Stmt* node, std::string& tensilicaCondRH
 
 void TreeBuilderConsumer::HandleTranslationUnit(ASTContext& Context) {
   if (this->outputFormat == "txt" || this->outputFormat == "TXT") {
-    visitor.TraverseDecl(Context.getTranslationUnitDecl());
     ComplexityKernelVisitor complexityVisitor(&Context);
     complexityVisitor.visit(visitor.root);
 
     TxtPrinter printer;
     printer.gen_out(visitor.root, Context, this->outputFile);
   } else if (this->outputFormat == "dot" || this->outputFormat == "DOT") {
-    visitor.TraverseDecl(Context.getTranslationUnitDecl());
-    DotPrinter printer;
-    printer.gen_out(visitor.root, Context, this->outputFile);
-  } else if (this->outputFormat == "tensilica") {
     KernelFunctionVisitor kernelVisitor(&Context, &visitor);
     kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
+    DotPrinter printer;
+    SeqKernel fileRoot;
+    for (auto& [funcDecl, kernelTree] : kernelVisitor.kernelFunctions) {
+      fileRoot.children.push_back(kernelTree->root);
+    }
+    printer.gen_out(&fileRoot, Context, this->outputFile);
+    fileRoot.children.clear();
+  } else if (this->outputFormat == "tensilica") {
     outs() << "Warning: The perfModel output format only works properly for Cadence ML kernels\n";
+    KernelFunctionVisitor kernelVisitor(&Context, &visitor);
+    kernelVisitor.TraverseDecl(Context.getTranslationUnitDecl());
     std::fstream file("output/" + this->outputFile, std::fstream::out | std::fstream::trunc);
     TensilicaPrinter printer;
     for (auto& [funcDecl, kernelTree] : kernelVisitor.kernelFunctions) {

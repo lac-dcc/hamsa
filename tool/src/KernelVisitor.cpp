@@ -116,6 +116,11 @@ std::string DotKernelVisitor::visit(CondKernel* kernel) {
   return label + links;
 }
 
+std::string DotKernelVisitor::visit(CallKernel* kernel) {
+  std::string link = std::to_string(kernel->id) + " -> " + std::to_string(kernel->callee->id) + '\n';
+  return std::to_string(kernel->id) + "[shape=polygon, label=\"" + kernel->funcName + "\"]\n" + link;
+}
+
 std::string TensilicaKernelVisitor::visit(SeqKernel* kernel) {
   if (kernel->children.size() == 1) {
     return (*kernel->children.begin())->accept(this);
@@ -218,11 +223,11 @@ std::string TensilicaKernelVisitor::visit(CondKernel* kernel) {
 }
 
 std::string TensilicaKernelVisitor::visit(CallKernel* kernel) {
-  if (this->visitedFunctions.find(kernel->kernelName) != this->visitedFunctions.end()) {
-    return this->visitedFunctions[kernel->kernelName];
+  if (this->visitedFunctions.find(kernel->funcName) != this->visitedFunctions.end()) {
+    return this->visitedFunctions[kernel->funcName];
   } else {
     std::string complexity = this->visit(kernel->callee);
-    this->visitedFunctions[kernel->kernelName] = complexity;
+    this->visitedFunctions[kernel->funcName] = complexity;
     return complexity;
   }
 }

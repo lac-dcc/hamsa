@@ -116,7 +116,7 @@ public:
   virtual std::string visit(LoopKernel* kernel);
   virtual std::string visit(SeqKernel* kernel);
   virtual std::string visit(CondKernel* kernel);
-  virtual std::string visit(CallKernel* kernel) { return ""; }
+  virtual std::string visit(CallKernel* kernel);
 };
 
 /**

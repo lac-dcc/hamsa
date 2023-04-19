@@ -92,7 +92,7 @@ public:
 class CallKernel : public Kernel {
 public:
   SeqKernel* parent;
-  std::string kernelName;
+  std::string funcName;
   SeqKernel* callee;
 
   virtual std::string accept(KernelVisitor<std::string>* visitor);

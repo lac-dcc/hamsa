@@ -8,8 +8,8 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include <string>
 #include <map>
+#include <string>
 
 struct TensilicaVar {
   std::string origin;
@@ -37,7 +37,7 @@ public:
   std::map<std::string, TensilicaVar>
       tensilicaVariables; ///< Hash table that maps variable names to tensilica function names.
   SeqKernel* root;        ///< Kernels tree root.
-  llvm::DenseMap<clang::FunctionDecl*, TensilicaTree*>* kernelFunctions;
+  llvm::DenseMap<clang::FunctionDecl*, TensilicaTree*>* kernelFunctions = nullptr;
 
   /**
    * \brief Constructor method.
