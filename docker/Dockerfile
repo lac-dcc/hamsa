@@ -12,8 +12,8 @@ RUN apt-get update -y && apt-get install -y locales curl wget tar sudo git apt-u
 ENV LANG en_US.utf8
 
 ############################################# DEPENDENCIES ##############################################
-RUN apt-get install -y gcc g++ ninja-build graphviz vim python3 python3-pip python3-dev automake make \
-    build-essential 
+RUN apt-get update -y && apt-get install -y gcc g++ ninja-build graphviz vim python2 python3 python3-pip \
+    python3-dev automake make build-essential haskell-stack
 
 ############################################# CMAKE #####################################################
 RUN wget -c https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-linux-x86_64.tar.gz \
@@ -30,10 +30,16 @@ RUN cd $HOME && git clone -b llvmorg-14.0.0 https://github.com/llvm/llvm-project
     && ninja \
     && ninja install
 
+############################################## PSYCHE-C ##################################################
+RUN cd $HOME && git clone -b original https://github.com/ltcmelo/psychec.git \
+    && cd psychec && cd solver \
+    && stack build && cd .. \
+    && cmake CMakeLists.txt && make -j 4
+
 ########################################### COPY HAMSA ##################################################
 RUN cd $HOME && git clone -b perfModel https://github.com/lac-dcc/hamsa 
 
-########################################### INSTALL TOOL ################################################
+########################################### SETUP TOOL ##################################################
 RUN cd $HOME/hamsa/tool && ./setup.sh
 
 ########################################### WORKDIR #####################################################
